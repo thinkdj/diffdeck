@@ -5,7 +5,11 @@ import {
 import { Details, RepoCard, detached } from './Repo.jsx'
 import { useConfirm } from './Confirm.jsx'
 
+// The hosted demo (vite --mode demo) answers from sample data; normal builds never include it.
+const DEMO = import.meta.env.MODE === 'demo'
+
 async function api(url, opts) {
+  if (DEMO) return (await import('./demo.js')).demoApi(url, opts)
   const res = await fetch('/api' + url, opts)
   const body = await res.json()
   if (!res.ok) throw new Error(body.error)
@@ -153,7 +157,7 @@ export default function App() {
   return (
     <div className="page">
       <header className="top">
-        <a className="logo" href="/"><img src="/icon.svg" alt="" />diffdeck</a>
+        <a className="logo" href="./"><img src={import.meta.env.BASE_URL + 'icon.svg'} alt="" />diffdeck</a>
         <div className="top__right">
           {checked && <span className="muted">Checked {checked.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>}
           <button className="btn btn--outline" onClick={refresh} disabled={busy}>
@@ -163,6 +167,7 @@ export default function App() {
         </div>
       </header>
 
+      {DEMO && <p className="notice notice--info">You are looking at sample repos. Run <code>npx diffdeck</code> on your computer to see your own.</p>}
       {error && <p className="notice" role="alert">{error}</p>}
 
       {roots.length > 0 && (
