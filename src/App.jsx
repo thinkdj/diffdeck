@@ -3,6 +3,7 @@ import {
   ArrowDownIcon, ArrowUpIcon, FileDiffIcon, FileDirectoryIcon, MoonIcon, PlusIcon, RepoIcon, SearchIcon, SunIcon, SyncIcon, XIcon,
 } from '@primer/octicons-react'
 import { Details, RepoCard, detached } from './Repo.jsx'
+import { useConfirm } from './Confirm.jsx'
 
 async function api(url, opts) {
   const res = await fetch('/api' + url, opts)
@@ -67,6 +68,7 @@ export default function App() {
   const searchRef = useRef(null)
   const inflight = useRef(null)
   const observer = useRef(null)
+  const [confirm, confirmUI] = useConfirm()
 
   // Every route returns the fresh list, so loading, adding and removing all land here.
   const run = useCallback(async (url, opts) => {
@@ -120,7 +122,14 @@ export default function App() {
     const ok = await run('/roots', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ path: input.value }) })
     if (ok) input.value = ''
   }
-  const remove = (root) => run('/roots?path=' + encodeURIComponent(root.path), { method: 'DELETE' })
+  const remove = async (root) => {
+    const ok = await confirm({
+      title: 'Stop watching this folder?',
+      body: <><code>{root.path}</code>{root.missing ? '' : ` and its ${root.count} ${root.count === 1 ? 'repo' : 'repos'}`} will leave diffdeck. Nothing on disk changes.</>,
+      action: 'Stop watching',
+    })
+    if (ok) run('/roots?path=' + encodeURIComponent(root.path), { method: 'DELETE' })
+  }
   const browse = () => run('/pick', { method: 'POST', headers: { 'content-type': 'application/json' }, body: '{}' }) // native dialog, adds the pick
 
   const repos = data?.repos ?? []
@@ -211,6 +220,7 @@ export default function App() {
           ))}
         </div>
       )}
+      {confirmUI}
     </div>
   )
 }
