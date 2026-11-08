@@ -160,8 +160,8 @@ export default function App() {
         <a className="logo" href="./"><img src={import.meta.env.BASE_URL + 'icon.svg'} alt="" />diffdeck</a>
         <div className="top__right">
           {checked && <span className="muted">Checked {checked.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>}
-          <button className="btn btn--outline" onClick={refresh} disabled={busy}>
-            <SyncIcon size={16} className={busy ? 'spin' : ''} />{busy ? 'Checking' : 'Refresh'}
+          <button className="btn btn--outline" onClick={refresh} disabled={busy} title="Refresh">
+            <SyncIcon size={16} className={busy ? 'spin' : ''} /><span>{busy ? 'Checking' : 'Refresh'}</span>
           </button>
           <ThemeToggle />
         </div>
@@ -218,7 +218,7 @@ export default function App() {
           {roots.map((root) => (
             <span className="root" key={root.path}>
               <FileDirectoryIcon size={14} />
-              <code>{root.path}</code>
+              <code title={root.path}>{root.path}</code>
               <small className={root.missing ? 'bad' : ''}>{root.missing ? 'not found' : root.count}</small>
               <button type="button" title="Stop watching" aria-label={`Stop watching ${root.path}`} onClick={() => remove(root)}><XIcon size={14} /></button>
             </span>

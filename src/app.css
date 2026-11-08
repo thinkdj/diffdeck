@@ -38,7 +38,7 @@ svg { flex: none; }
 @keyframes spin { to { transform: rotate(360deg); } }
 @media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }
 
-.page { max-width: 1320px; margin: 0 auto; padding: 24px clamp(16px, 4vw, 48px) 80px; display: grid; gap: 20px; }
+.page { max-width: 1320px; margin: 0 auto; padding: 24px clamp(16px, 4vw, 48px) 80px; display: grid; grid-template-columns: minmax(0, 1fr); gap: 20px; } /* minmax: no child can push the page wider than the screen */
 .top { display: flex; align-items: center; justify-content: space-between; gap: 16px; }
 .top__right { display: flex; align-items: center; gap: 10px; font-size: 14px; }
 .logo { display: inline-flex; align-items: center; gap: 10px; font: 700 22px/1 var(--display); letter-spacing: -.02em; color: var(--ink); }
@@ -59,10 +59,12 @@ svg { flex: none; }
 .ibtn { display: inline-grid; place-items: center; width: 32px; height: 32px; padding: 0; border: 0; border-radius: var(--r-sm); background: none; color: var(--ink-muted); cursor: pointer; transition: background-color .12s, color .12s; }
 .ibtn:hover { background: var(--surface-sunk); color: var(--ink); }
 .actions { display: flex; flex-wrap: wrap; align-items: center; gap: 4px; }
+.actions .btn { max-width: 100%; } /* a long remote URL shortens with … instead of overflowing */
+.actions .btn span { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
 
 /* toolbar: filter, search, sort */
 .bar { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; }
-.seg { display: inline-flex; padding: 3px; gap: 2px; border-radius: 10px; background: var(--surface-sunk); }
+.seg { display: inline-flex; max-width: 100%; overflow-x: auto; padding: 3px; gap: 2px; border-radius: 10px; background: var(--surface-sunk); }
 .seg label { position: relative; }
 .seg input { position: absolute; inset: 0; margin: 0; opacity: 0; cursor: pointer; }
 .seg span { display: inline-flex; align-items: center; gap: 7px; height: 32px; padding: 0 12px; border-radius: 8px; font: 600 13.5px/1 var(--sans); color: var(--ink-muted); }
@@ -76,10 +78,12 @@ svg { flex: none; }
 .search kbd { padding: 1px 7px; border: 1px solid var(--line); border-radius: 5px; font-size: 12px; }
 
 /* repo grid: one card per project, loud when it needs you, quiet when clean */
-.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); } /* gap set inline from GAP */
+.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(300px, 100%), 1fr)); } /* gap set inline from GAP */
 .card { position: relative; display: grid; align-content: start; gap: 10px; min-width: 0; padding: 14px 14px 16px 18px; background: var(--surface); border-radius: var(--r-md); box-shadow: var(--shadow); transition: transform .12s, box-shadow .12s; }
 .card:hover, .card:focus-within { z-index: 2; } /* keeps its tooltip above neighbouring cards */
-.card:hover { transform: translateY(-2px); box-shadow: var(--shadow), 0 0 0 1.5px var(--line); }
+.card:hover { box-shadow: var(--shadow), 0 0 0 1.5px var(--line); }
+/* Lift only with a real mouse on a wide screen: on phones the tooltip is fixed to the screen, and a transform would trap it in the card. */
+@media (hover: hover) and (min-width: 641px) { .card:hover { transform: translateY(-2px); } }
 .card.is-open { box-shadow: var(--shadow), 0 0 0 2px var(--sprout); }
 .card__name .tip { margin-left: 6px; vertical-align: 1px; }
 
@@ -153,7 +157,7 @@ button.crumb:hover { color: var(--sprout-ink); text-decoration: underline; text-
 .details__head code { display: block; margin-top: 2px; font-size: 13px; color: var(--ink-muted); overflow-wrap: anywhere; }
 .details .actions { gap: 8px; }
 .details__status { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 20px; padding: 12px 16px; border-radius: var(--r-md); background: var(--surface-sunk); }
-.details__cols { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px 40px; }
+.details__cols { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(300px, 100%), 1fr)); gap: 20px 40px; }
 .details section { display: grid; align-content: start; gap: 10px; min-width: 0; }
 .error { color: var(--beet); font: 13.5px/22px var(--mono); white-space: pre-wrap; overflow-wrap: anywhere; }
 .files, .commits { list-style: none; padding: 0; display: grid; gap: 4px; font: 400 13.5px/22px var(--mono); }
@@ -189,18 +193,33 @@ button.crumb:hover { color: var(--sprout-ink); text-decoration: underline; text-
 
 .roots { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
 .roots .label { margin-right: 4px; }
-.root { display: inline-flex; align-items: center; gap: 8px; height: 30px; padding: 0 4px 0 10px; border: 1px solid var(--line); border-radius: var(--r-pill); font: 400 13px var(--mono); color: var(--ink-muted); }
-.root code { color: var(--ink); }
+.root { display: inline-flex; align-items: center; gap: 8px; max-width: 100%; height: 30px; padding: 0 4px 0 10px; border: 1px solid var(--line); border-radius: var(--r-pill); font: 400 13px var(--mono); color: var(--ink-muted); }
+.root code { min-width: 0; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; color: var(--ink); }
 .root small { font: inherit; }
 .root small.bad { color: var(--beet); }
 .root button { display: grid; place-items: center; width: 22px; height: 22px; padding: 0; border: 0; border-radius: 50%; background: none; color: var(--ink-muted); cursor: pointer; }
 .root button:hover { background: var(--beet-soft); color: var(--beet); }
 
-@media (max-width: 640px) {
-  .top__right > span { display: none; }
-  .details { padding: 16px; }
-}
+/* tablet: filters get their own full row, search and sort share the next */
 @media (max-width: 860px) {
+  .bar > .seg:first-child { flex: 1 1 100%; }
+  .bar > .seg:first-child label { flex: 1; }
+  .bar > .seg:first-child span { display: flex; justify-content: center; }
+  .search { min-width: 0; }
   .details--tree { grid-template-columns: minmax(0, 1fr); }
   .tree { padding: 0 0 16px; border-right: 0; border-bottom: 1px solid var(--line); }
+}
+/* phone */
+@media (max-width: 640px) {
+  .top__right > span, .top .btn span { display: none; } /* Refresh goes icon-only */
+  .bar > .seg:first-child svg, .search kbd { display: none; }
+  .seg span { gap: 5px; padding: 0 8px; }
+  .search input, .addbar input { font-size: 16px; } /* iOS zooms into inputs under 16px */
+  .addbar { flex-wrap: wrap; gap: 10px; }
+  .addbar label { flex-basis: 100%; height: 52px; padding: 0 16px; }
+  .addbar .btn { flex: 1; justify-content: center; height: 46px; }
+  .details { padding: 16px; }
+  .details__head h2 { font-size: 21px; line-height: 28px; }
+  /* tapped tooltips sit along the bottom of the screen, so they never run off its edge */
+  .tip__bubble { position: fixed; top: auto; right: 16px; bottom: 16px; left: 16px; width: auto; max-width: none; padding: 12px 14px; font-size: 13.5px; line-height: 20px; transform: none; }
 }

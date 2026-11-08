@@ -72,11 +72,11 @@ function Actions({ r, labels }) {
   return (
     <div className="actions">
       <a className={cls(true)} href={'vscode://file/' + r.path.replaceAll('\\', '/').replace(/^\/+/, '')} title="Open in VS Code">
-        <CodeIcon size={16} />{labels && 'Open in VS Code'}
+        <CodeIcon size={16} />{labels && <span>Open in VS Code</span>}
       </a>
-      {r.web && <a className={cls()} href={r.web} target="_blank" rel="noreferrer" title={r.web}><Host size={16} />{labels && r.web.replace('https://', '')}</a>}
+      {r.web && <a className={cls()} href={r.web} target="_blank" rel="noreferrer" title={r.web}><Host size={16} />{labels && <span>{r.web.replace('https://', '')}</span>}</a>}
       <button type="button" className={cls()} onClick={copy} title="Copy path">
-        {copied ? <CheckIcon size={16} /> : <CopyIcon size={16} />}{labels && (copied ? 'Copied' : 'Copy path')}
+        {copied ? <CheckIcon size={16} /> : <CopyIcon size={16} />}{labels && <span>{copied ? 'Copied' : 'Copy path'}</span>}
       </button>
     </div>
   )
