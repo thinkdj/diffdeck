@@ -1,5 +1,6 @@
 // One repo: its status pills, its card (with any nested repos inside), and the details panel that opens below.
 import { useEffect, useState } from 'react'
+import { Tip } from './Tip.jsx'
 import {
   AlertIcon, ArchiveIcon, ArrowDownIcon, ArrowUpIcon, CheckIcon, CloudOfflineIcon, CodeIcon, CopyIcon,
   DiffAddedIcon, DiffModifiedIcon, DiffRemovedIcon, DiffRenamedIcon, FileDiffIcon, FileSubmoduleIcon, GitBranchIcon,
@@ -35,6 +36,20 @@ function badges(r) {
 const toneOf = (...repos) => {
   const tones = repos.flatMap(badges).map((x) => x.tone)
   return ['bad', 'warn'].find((t) => tones.includes(t)) ?? 'ok'
+}
+
+// Dot after the repo name: worst status of the repo and its nested repos, explained on hover.
+const HEADLINE = { bad: 'At risk: work could be lost', warn: 'Work not on the remote yet', ok: 'All good: clean and pushed' }
+function StatusDot({ r, kids = [] }) {
+  const tone = toneOf(r, ...kids)
+  const why = [r, ...kids].flatMap((x) => badges(x)
+    .filter((b) => b.tone === 'bad' || b.tone === 'warn')
+    .map((b) => (x === r ? b.text : `${x.name}: ${b.text}`)))
+  return (
+    <Tip text={<><b>{HEADLINE[tone]}</b>{why.map((w) => <span key={w}>{w}</span>)}</>}>
+      <span className={`dot dot--${tone}`} />
+    </Tip>
+  )
 }
 
 const Pills = ({ r, compact }) => (
@@ -75,7 +90,7 @@ export function RepoCard({ r, kids, open, onOpen }) {
     <article className={`card${isOpen ? ' is-open' : ''}`}>
       <button className="card__hit" onClick={() => onOpen(r.path)} aria-expanded={open === r.path} aria-label={`Details for ${r.name}`} />
       <header className="card__head">
-        <h3 className="card__name">{r.name}</h3>
+        <h3 className="card__name">{r.name}<StatusDot r={r} kids={kids} /></h3>
         <Actions r={r} />
       </header>
       <p className="branch"><GitBranchIcon size={14} /><span>{branchOf(r)}</span></p>

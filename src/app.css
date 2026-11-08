@@ -77,8 +77,23 @@ svg { flex: none; }
 /* repo grid: one card per project, loud when it needs you, quiet when clean */
 .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); } /* gap set inline from GAP */
 .card { position: relative; display: grid; align-content: start; gap: 10px; min-width: 0; padding: 14px 14px 16px 18px; background: var(--surface); border-radius: var(--r-md); box-shadow: var(--shadow); transition: transform .12s, box-shadow .12s; }
+.card:hover, .card:focus-within { z-index: 2; } /* keeps its tooltip above neighbouring cards */
 .card:hover { transform: translateY(-2px); box-shadow: var(--shadow), 0 0 0 1.5px var(--line); }
 .card.is-open { box-shadow: var(--shadow), 0 0 0 2px var(--sprout); }
+.card__name .tip { margin-left: 6px; vertical-align: 1px; }
+
+/* status dot: always paired with a tooltip saying what it means */
+.dot { display: block; width: 9px; height: 9px; border-radius: 50%; }
+.dot--ok { background: var(--sprout); box-shadow: 0 0 0 3px var(--sprout-soft); }
+.dot--warn { background: var(--sun-ink); box-shadow: 0 0 0 3px var(--sun-soft); }
+.dot--bad { background: var(--beet); box-shadow: 0 0 0 3px var(--beet-soft); }
+
+/* tooltip (src/Tip.jsx) */
+.tip { position: relative; z-index: 1; display: inline-flex; padding: 4px; border-radius: 50%; cursor: help; }
+.tip__bubble { position: absolute; top: calc(100% + 6px); left: 50%; z-index: 20; display: grid; gap: 2px; width: max-content; max-width: 280px; padding: 8px 11px; border-radius: var(--r-sm); background: var(--ink); color: var(--surface); box-shadow: var(--shadow); font: 500 12.5px/18px var(--sans); letter-spacing: 0; text-align: left; white-space: normal; transform: translateX(-50%); pointer-events: none; opacity: 0; visibility: hidden; transition: opacity .12s, visibility .12s; }
+.tip__bubble b { font-weight: 650; }
+.tip:hover, .tip:focus-visible { z-index: 3; } /* above the card's other raised bits (actions, nested list) */
+.tip:hover .tip__bubble, .tip:focus-visible .tip__bubble { opacity: 1; visibility: visible; }
 .card__hit { position: absolute; inset: 0; padding: 0; border: 0; border-radius: inherit; background: none; cursor: pointer; }
 .card__hit:focus-visible { outline-offset: 2px; }
 .card .actions { position: relative; z-index: 1; gap: 0; margin: -4px -4px 0 0; }
