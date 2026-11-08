@@ -121,6 +121,7 @@ export default function App() {
     if (ok) input.value = ''
   }
   const remove = (root) => run('/roots?path=' + encodeURIComponent(root.path), { method: 'DELETE' })
+  const browse = () => run('/pick', { method: 'POST', headers: { 'content-type': 'application/json' }, body: '{}' }) // native dialog, adds the pick
 
   const repos = data?.repos ?? []
   const roots = data?.roots ?? []
@@ -194,6 +195,7 @@ export default function App() {
           <input name="path" placeholder={navigator.platform.startsWith('Win') ? 'C:\\code\\my-app  or  C:\\code' : '~/code/my-app  or  ~/code'} aria-label="Repo or folder path" autoComplete="off" spellCheck="false" autoFocus={data && !roots.length} />
         </label>
         <button className="btn btn--primary" disabled={busy}>Add</button>
+        <button type="button" className="btn btn--outline" onClick={browse} disabled={busy}><FileDirectoryIcon size={18} />Browse</button>
       </form>
 
       {roots.length > 0 && (

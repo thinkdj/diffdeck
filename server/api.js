@@ -3,6 +3,7 @@ import fs from 'node:fs'
 import os from 'node:os'
 import path from 'node:path'
 import { status } from './git.js'
+import { pickFolder } from './pickFolder.js'
 
 const FILE = path.join(os.homedir(), '.diffdeck.json')
 
@@ -81,6 +82,11 @@ export default async function api(req, res) {
     if (pathname === '/repos' && req.method === 'GET') return send(200, await list())
     if (pathname === '/roots' && req.method === 'POST') {
       addRoot((await readJson(req)).path)
+      return send(200, await list())
+    }
+    if (pathname === '/pick' && req.method === 'POST') {
+      const picked = await pickFolder()
+      if (picked) addRoot(picked)
       return send(200, await list())
     }
     if (pathname === '/roots' && req.method === 'DELETE') {
