@@ -20,7 +20,12 @@
     "build:demo": "vite build --mode demo",
     "start": "vite build && node bin/diffdeck.js",
     "test": "node --test",
-    "prepublishOnly": "node --test && vite build"
+    "preversion": "node --test",
+    "prepublishOnly": "node --test && vite build",
+    "release": "npm version patch -m \"Release %s\" && npm publish && git push --follow-tags",
+    "release:minor": "npm version minor -m \"Release %s\" && npm publish && git push --follow-tags",
+    "release:major": "npm version major -m \"Release %s\" && npm publish && git push --follow-tags",
+    "release:beta": "npm version prerelease --preid beta -m \"Release %s\" && npm publish --tag beta && git push --follow-tags"
   },
   "devDependencies": {
     "@primer/octicons-react": "^19.42.0",

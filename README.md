@@ -40,11 +40,20 @@ pnpm build:demo   # static site in dist-demo/, relative paths, host it anywhere 
 
 `.github/workflows/demo.yml` publishes it to GitHub Pages on every push to `main`. Turn it on once in the repo's Settings > Pages > Source: GitHub Actions.
 
-## Publish
+## Release
 
-```sh
-npm publish       # runs the tests and builds dist/ first (prepublishOnly)
-```
+From a clean `main`, in a normal terminal (npm opens the browser for your security key):
+
+| Command | Version | npm dist-tag | Who gets it |
+|---|---|---|---|
+| `pnpm release` | 0.1.0 → 0.1.1 | `latest` | everyone running `npx diffdeck` |
+| `pnpm release:minor` | 0.1.1 → 0.2.0 | `latest` | everyone |
+| `pnpm release:major` | 0.2.0 → 1.0.0 | `latest` | everyone |
+| `pnpm release:beta` | 0.2.0 → 0.2.1-beta.0 | `beta` | only `npx diffdeck@beta` |
+
+Each one runs the tests, bumps `package.json`, commits `Release x.y.z` with a `vx.y.z` git tag, publishes (tests and build run again in `prepublishOnly`), then pushes the commit and tag. Publishing comes before the push, so a cancelled publish leaves nothing half-released on GitHub: rerun `npm publish`, then `git push --follow-tags`.
+
+To make a tested beta the default: `npm dist-tag add diffdeck@0.2.1-beta.0 latest`.
 
 The package holds only `bin/`, `server/` and the built `dist/`, with no runtime dependencies: React and the icons are bundled into `dist/` at build time.
 
