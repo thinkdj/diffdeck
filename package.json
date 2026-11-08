@@ -1,0 +1,18 @@
+{
+  "name": "diffdeck",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite --open",
+    "start": "vite build && vite preview --open",
+    "test": "node --test"
+  },
+  "dependencies": {
+    "react": "^19.3.1",
+    "react-dom": "^19.3.1"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-react": "^6.2.1",
+    "vite": "^8.3.6"
+  }
+}
