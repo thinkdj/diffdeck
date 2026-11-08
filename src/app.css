@@ -8,6 +8,15 @@
   --shadow: 0 1px 2px rgba(17, 38, 31, .05), 0 6px 24px rgba(17, 38, 31, .06);
   color-scheme: light;
 }
+[data-theme="dark"] {
+  --field: #0b1410; --surface: #121f19; --surface-sunk: #0e1914;
+  --ink: #e7f1eb; --ink-muted: #93a69c; --line: #1f3229; --line-strong: #5a776a;
+  --sprout-ink: #7fd6ff; --sprout-soft: #0f3142;
+  --sun-ink: #ffd23f; --sun-soft: #33290a; --beet: #ff7aa3; --beet-soft: #3b1323;
+  --focus: #5ac8fa;
+  --shadow: 0 1px 2px rgba(0, 0, 0, .5);
+  color-scheme: dark;
+}
 :root {
   --r-sm: 8px; --r-md: 14px; --r-pill: 999px;
   --display: "Funnel Display", "Avenir Next", system-ui, sans-serif;

@@ -1,6 +1,6 @@
 import { Fragment, useCallback, useEffect, useRef, useState } from 'react'
 import {
-  ArrowDownIcon, ArrowUpIcon, FileDiffIcon, FileDirectoryIcon, PlusIcon, RepoIcon, SearchIcon, SyncIcon, XIcon,
+  ArrowDownIcon, ArrowUpIcon, FileDiffIcon, FileDirectoryIcon, MoonIcon, PlusIcon, RepoIcon, SearchIcon, SunIcon, SyncIcon, XIcon,
 } from '@primer/octicons-react'
 import { Details, RepoCard, detached } from './Repo.jsx'
 
@@ -35,6 +35,22 @@ function Seg({ label, value, options, onChange }) {
         </label>
       ))}
     </div>
+  )
+}
+
+// Light by default; your choice is remembered in this browser. index.html applies it before first paint.
+function ThemeToggle() {
+  const [theme, setTheme] = useState(document.documentElement.dataset.theme || 'light')
+  const flip = () => {
+    const next = theme === 'light' ? 'dark' : 'light'
+    document.documentElement.dataset.theme = next
+    try { localStorage.setItem('diffdeck.theme', next) } catch {}
+    setTheme(next)
+  }
+  return (
+    <button className="ibtn" onClick={flip} title="Switch light / dark" aria-label={`Switch to ${theme === 'light' ? 'dark' : 'light'} theme`}>
+      {theme === 'light' ? <MoonIcon size={18} /> : <SunIcon size={18} />}
+    </button>
   )
 }
 
@@ -133,6 +149,7 @@ export default function App() {
           <button className="btn btn--outline" onClick={refresh} disabled={busy}>
             <SyncIcon size={16} className={busy ? 'spin' : ''} />{busy ? 'Checking' : 'Refresh'}
           </button>
+          <ThemeToggle />
         </div>
       </header>
 
