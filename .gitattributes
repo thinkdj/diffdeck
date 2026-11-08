@@ -1,0 +1,2 @@
+# LF everywhere: a CRLF after the #! line breaks `npx diffdeck` on macOS and Linux
+* text=auto eol=lf

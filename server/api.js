@@ -1,9 +1,13 @@
-// JSON API, mounted at /api by vite.config.js. The only state is the list of folders you added.
+// JSON API at /api: mounted by bin/diffdeck.js (npx diffdeck) and by vite.config.js (pnpm dev).
+// The only state is the list of folders you added.
 import fs from 'node:fs'
 import os from 'node:os'
 import path from 'node:path'
 import { status } from './git.js'
 import { pickFolder } from './pickFolder.js'
+
+// Rarely used by other dev tools, and fixed so the page keeps its origin (the saved theme lives per origin).
+export const PORT = 4747
 
 const FILE = path.join(os.homedir(), '.diffdeck.json')
 
@@ -77,8 +81,11 @@ export default async function api(req, res) {
   }
   try {
     const { pathname, searchParams } = new URL(req.url, 'http://localhost')
-    // POSTs must be JSON: another website can't send that without a CORS preflight, which Vite refuses for foreign origins
+    // Writes come only from our own page: a foreign Origin is refused, and POSTs must be JSON,
+    // which another website can't send without a CORS preflight that nothing here answers.
+    if (req.method !== 'GET' && req.headers.origin && new URL(req.headers.origin).host !== req.headers.host) return send(403, { error: 'Not allowed.' })
     if (req.method === 'POST' && !req.headers['content-type']?.startsWith('application/json')) return send(415, { error: 'Send JSON.' })
+    if (pathname === '/ping') return send(200, { app: 'diffdeck' }) // lets a second `npx diffdeck` find this one
     if (pathname === '/repos' && req.method === 'GET') return send(200, await list())
     if (pathname === '/roots' && req.method === 'POST') {
       addRoot((await readJson(req)).path)

@@ -1,19 +1,32 @@
 {
   "name": "diffdeck",
-  "private": true,
+  "version": "0.1.0",
+  "description": "Every local git repo you juggle, on one page: branch, uncommitted changes, unpushed commits, nested repos. Read-only.",
+  "keywords": ["git", "repos", "dashboard", "status", "solo-founder", "cli", "local"],
+  "license": "MIT",
+  "author": "Deepak Thomas",
+  "repository": { "type": "git", "url": "git+https://github.com/thinkdj/diffdeck.git" },
+  "homepage": "https://github.com/thinkdj/diffdeck#readme",
+  "bugs": "https://github.com/thinkdj/diffdeck/issues",
   "type": "module",
+  "bin": { "diffdeck": "bin/diffdeck.js" },
+  "files": ["bin", "dist", "server", "!server/*.test.js"],
+  "engines": { "node": ">=20" },
+  "packageManager": "pnpm@10.15.1",
   "scripts": {
     "dev": "vite --open",
-    "start": "vite build && vite preview --open",
-    "test": "node --test"
-  },
-  "dependencies": {
-    "@primer/octicons-react": "^19.42.0",
-    "react": "^19.3.1",
-    "react-dom": "^19.3.1"
+    "dev:demo": "vite --mode demo --open",
+    "build": "vite build",
+    "build:demo": "vite build --mode demo",
+    "start": "vite build && node bin/diffdeck.js",
+    "test": "node --test",
+    "prepublishOnly": "node --test && vite build"
   },
   "devDependencies": {
+    "@primer/octicons-react": "^19.42.0",
     "@vitejs/plugin-react": "^6.2.1",
+    "react": "^19.3.1",
+    "react-dom": "^19.3.1",
     "vite": "^8.3.6"
   }
 }
