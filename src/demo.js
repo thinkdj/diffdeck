@@ -1,6 +1,9 @@
 // Sample repos for the hosted demo (vite --mode demo). Shaped exactly like GET /api/repos.
 // A solo founder's ~/code: one SaaS with its api and web, a landing page, a mobile app, a browser extension,
 // a newsletter, a support bot with its prompts, and a blog. Times are relative to now so the demo never ages.
+// Metadata edits really work here, through the same functions the server uses, but live only until you reload.
+import { removeField, saveField, setValue, withMeta } from '../server/meta.js'
+
 const ROOT = '/Users/sam/code'
 const now = Math.floor(Date.now() / 1000)
 const m = 60, h = 3600, d = 86400
@@ -119,10 +122,40 @@ const repos = [
   }),
 ]
 
-const data = { roots: [{ path: ROOT, count: repos.length }], repos }
+// Sample metadata: a global field of each type, plus local ones on the mobile app and the api. Shaped like ~/.diffdeck.json.
+const inDays = (n) => new Date(Date.now() + n * d * 1000).toISOString().slice(0, 10)
+const at = (name) => `${ROOT}/${name}`
+let cfg = {
+  fields: [
+    { key: 'Live', desc: 'Customers use it in production', type: 'boolean' },
+    { key: 'Stack', desc: 'Main framework or language', type: 'string' },
+    { key: 'Review by', desc: 'When to look at this repo again', type: 'date' },
+    { key: 'Notes', desc: 'Anything worth remembering next time', type: 'text' },
+    { key: 'App Store', desc: 'Is the latest build live in the store?', type: 'boolean', repo: at('mobile-app') },
+    { key: 'Stripe mode', desc: 'Which Stripe keys this branch uses', type: 'string', repo: at('invoice-app/api') },
+  ],
+  meta: {
+    [at('invoice-app')]: { Live: true, Stack: 'pnpm workspace', 'Review by': inDays(7) },
+    [at('invoice-app/api')]: { Live: true, Stack: 'Fastify + Postgres', 'Stripe mode': 'Test', Notes: 'Stripe keys live in the password manager, never in .env.\nThe webhook secret rotates every 90 days.' },
+    [at('invoice-app/web')]: { Live: true, Stack: 'Next.js' },
+    [at('landing-page')]: { Live: true, Stack: 'Astro' },
+    [at('mobile-app')]: { Live: true, Stack: 'Expo', 'Review by': inDays(2), Notes: 'Release 1.4 is in App Store review. Merge main before the next build.' },
+    [at('chrome-extension')]: { Stack: 'Vite + TypeScript' },
+    [at('newsletter')]: { 'Review by': inDays(1), Notes: 'Add a remote before the first real send.' },
+    [at('support-bot')]: { Live: true, Stack: 'Node' },
+    [at('blog')]: { Stack: 'Eleventy' },
+  },
+}
+const view = () => structuredClone({ roots: [{ path: ROOT, count: repos.length }], fields: cfg.fields, repos: repos.map((r) => withMeta(cfg, r)) })
 
-// Stands in for fetch('/api' + url): reads work, anything that would change the list explains the demo.
+// Stands in for fetch('/api' + url): reads and metadata edits work, changing the watched folders explains the demo.
 export async function demoApi(url, opts = {}) {
-  if ((opts.method ?? 'GET') === 'GET') return structuredClone(data)
-  throw new Error('This demo shows sample repos. Run npx diffdeck on your computer to watch your own.')
+  const method = opts.method ?? 'GET'
+  const { pathname, searchParams } = new URL(url, 'http://demo')
+  const body = JSON.parse(opts.body ?? '{}')
+  if (pathname === '/fields' && method === 'POST') cfg = saveField(cfg, body)
+  else if (pathname === '/fields' && method === 'DELETE') cfg = removeField(cfg, searchParams.get('key'), searchParams.get('repo'))
+  else if (pathname === '/meta') cfg = setValue(cfg, body)
+  else if (method !== 'GET') throw new Error('This demo shows sample repos. Run npx diffdeck on your computer to watch your own.')
+  return view()
 }

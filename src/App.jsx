@@ -4,6 +4,8 @@ import {
 } from '@primer/octicons-react'
 import { Details, RepoCard, detached } from './Repo.jsx'
 import { useConfirm } from './Confirm.jsx'
+import { FieldsDialog, metaText } from './Meta.jsx'
+import { Seg } from './Seg.jsx'
 
 // The hosted demo (vite --mode demo) answers from sample data; normal builds never include it.
 const DEMO = import.meta.env.MODE === 'demo'
@@ -29,19 +31,6 @@ const SORTS = {
   name: (a, b) => a.r.name.localeCompare(b.r.name),
 }
 const GAP = 14 // px between cards, also used to aim the details caret
-
-function Seg({ label, value, options, onChange }) {
-  return (
-    <div className="seg" role="radiogroup" aria-label={label}>
-      {options.map(([key, text, Icon, count]) => (
-        <label key={key}>
-          <input type="radio" name={label} checked={value === key} onChange={() => onChange(key)} />
-          <span>{Icon && <Icon size={14} />}{text}{count !== undefined && <small>{count}</small>}</span>
-        </label>
-      ))}
-    </div>
-  )
-}
 
 // Light by default; your choice is remembered in this browser. index.html applies it before first paint.
 function ThemeToggle() {
@@ -69,6 +58,7 @@ export default function App() {
   const [q, setQ] = useState('')
   const [open, setOpen] = useState(null)
   const [cols, setCols] = useState(1)
+  const [fieldsRepo, setFieldsRepo] = useState(null) // the repo whose fields dialog is open
   const searchRef = useRef(null)
   const inflight = useRef(null)
   const observer = useRef(null)
@@ -89,6 +79,9 @@ export default function App() {
       setBusy(false)
     }
   }, [])
+
+  const post = (url, body) => run(url, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body) })
+  const del = (url) => run(url, { method: 'DELETE' })
 
   const refresh = useCallback(() => {
     inflight.current ??= run('/repos').finally(() => { inflight.current = null })
@@ -123,7 +116,7 @@ export default function App() {
   const add = async (e) => {
     e.preventDefault()
     const input = e.currentTarget.elements.path
-    const ok = await run('/roots', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ path: input.value }) })
+    const ok = await post('/roots', { path: input.value })
     if (ok) input.value = ''
   }
   const remove = async (root) => {
@@ -132,17 +125,20 @@ export default function App() {
       body: <><code>{root.path}</code>{root.missing ? '' : ` and its ${root.count} ${root.count === 1 ? 'repo' : 'repos'}`} will leave diffdeck. Nothing on disk changes.</>,
       action: 'Stop watching',
     })
-    if (ok) run('/roots?path=' + encodeURIComponent(root.path), { method: 'DELETE' })
+    if (ok) del('/roots?path=' + encodeURIComponent(root.path))
   }
-  const browse = () => run('/pick', { method: 'POST', headers: { 'content-type': 'application/json' }, body: '{}' }) // native dialog, adds the pick
+  const browse = () => post('/pick', {}) // native dialog, adds the pick
+  const saveMeta = (path, key, value) => post('/meta', { path, key, value })
+  const openFields = (r) => { setError(''); setFieldsRepo(r) }
 
   const repos = data?.repos ?? []
   const roots = data?.roots ?? []
+  const fields = data?.fields ?? []
   const paths = new Set(repos.map((r) => r.path))
   const kidsOf = Object.groupBy(repos.filter((r) => paths.has(r.parent)), (r) => r.parent)
   const match = FILTERS.find(([key]) => key === filter)[3]
   const needle = q.trim().toLowerCase()
-  const hit = (r) => match(r) && `${r.name} ${r.branch}`.toLowerCase().includes(needle)
+  const hit = (r) => match(r) && `${r.name} ${r.branch} ${metaText(r, fields)}`.toLowerCase().includes(needle)
   const shown = repos
     .filter((r) => !paths.has(r.parent))
     .map((r) => ({ r, kids: kidsOf[r.path] ?? [] }))
@@ -175,7 +171,7 @@ export default function App() {
           <Seg label="Filter" value={filter} onChange={setFilter} options={FILTERS.map(([key, text, Icon, f]) => [key, text, Icon, repos.filter(f).length])} />
           <label className="search">
             <SearchIcon size={16} />
-            <input ref={searchRef} type="search" placeholder="Search repos or branches" aria-label="Search repos" value={q} onChange={(e) => setQ(e.target.value)} />
+            <input ref={searchRef} type="search" placeholder="Search repos, branches, metadata" aria-label="Search repos" value={q} onChange={(e) => setQ(e.target.value)} />
             <kbd>/</kbd>
           </label>
           <Seg label="Sort" value={sort} onChange={setSort} options={[['recent', 'Recent'], ['name', 'A–Z']]} />
@@ -194,8 +190,10 @@ export default function App() {
         <div className="grid" ref={gridRef} style={{ gap: GAP }}>
           {shown.map((g, i) => (
             <Fragment key={g.r.path}>
-              <RepoCard r={g.r} kids={g.kids} open={open} onOpen={toggle} />
-              {selected && i === rowEnd && <Details r={selected} group={shown[at]} caret={caret} onSelect={setOpen} onClose={close} />}
+              <RepoCard r={g.r} kids={g.kids} fields={fields} open={open} onOpen={toggle} />
+              {selected && i === rowEnd && (
+                <Details r={selected} group={shown[at]} caret={caret} fields={fields} onMeta={saveMeta} onFields={openFields} onSelect={setOpen} onClose={close} />
+              )}
             </Fragment>
           ))}
         </div>
@@ -225,6 +223,7 @@ export default function App() {
           ))}
         </div>
       )}
+      {fieldsRepo && <FieldsDialog repo={fieldsRepo} fields={fields} busy={busy} error={error} post={post} remove={del} onClose={() => setFieldsRepo(null)} />}
       {confirmUI}
     </div>
   )

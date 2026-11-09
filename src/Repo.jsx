@@ -1,6 +1,7 @@
 // One repo: its status pills, its card (with any nested repos inside), and the details panel that opens below.
 import { useEffect, useState } from 'react'
 import { Tip } from './Tip.jsx'
+import { MetaSection, Tags } from './Meta.jsx'
 import {
   AlertIcon, ArchiveIcon, ArrowDownIcon, ArrowUpIcon, CheckIcon, CloudOfflineIcon, CodeIcon, CopyIcon,
   DiffAddedIcon, DiffModifiedIcon, DiffRemovedIcon, DiffRenamedIcon, FileDiffIcon, FileSubmoduleIcon, GitBranchIcon,
@@ -83,7 +84,7 @@ function Actions({ r, labels }) {
 }
 
 // A top-level repo. Repos nested inside it are listed in the card, so the hierarchy reads at a glance.
-export function RepoCard({ r, kids, open, onOpen }) {
+export function RepoCard({ r, kids, fields, open, onOpen }) {
   const last = r.commits?.[0]
   const isOpen = open === r.path || kids.some((k) => k.path === open)
   return (
@@ -95,6 +96,7 @@ export function RepoCard({ r, kids, open, onOpen }) {
       </header>
       <p className="branch"><GitBranchIcon size={14} /><span>{branchOf(r)}</span></p>
       <Pills r={r} />
+      <Tags r={r} fields={fields} />
       <p className="card__last" title={last && when(last.time)}>
         {last ? (
           <>Last commit:<span className="card__subject"><span>{last.subject}</span></span><b>{agoLong(last.time)}</b></>
@@ -138,9 +140,9 @@ function Tree({ group, current, onSelect }) {
 }
 
 // Full-width panel under the row of the open card; the caret points at that card's column.
-export function Details({ r, group, caret, onSelect, onClose }) {
+export function Details({ r, group, caret, fields, onMeta, onFields, onSelect, onClose }) {
   useEffect(() => {
-    const onKey = (e) => e.key === 'Escape' && onClose()
+    const onKey = (e) => e.key === 'Escape' && !document.querySelector('dialog[open]') && onClose() // Esc in a dialog closes only the dialog
     addEventListener('keydown', onKey)
     return () => removeEventListener('keydown', onKey)
   }, [onClose])
@@ -189,6 +191,7 @@ export function Details({ r, group, caret, onSelect, onClose }) {
           </section>
         </div>
       )}
+      <MetaSection r={r} fields={fields} onSave={onMeta} onManage={onFields} />
       </div>
     </section>
   )
