@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react'
 import { Tip } from './Tip.jsx'
 import { MetaSection, Tags } from './Meta.jsx'
 import { PkgSection, depRow, depsOf, scriptRow, scriptsOf } from './Pkg.jsx'
+import { About } from './About.jsx'
 import {
   AlertIcon, ArchiveIcon, ArrowDownIcon, ArrowUpIcon, CheckIcon, ChevronDownIcon, ChevronRightIcon, CloudOfflineIcon, CodeIcon,
   CopyIcon, DiffAddedIcon, DiffModifiedIcon, DiffRemovedIcon, DiffRenamedIcon, FileDiffIcon, FileSubmoduleIcon, GitBranchIcon, GitCommitIcon,
@@ -131,7 +132,7 @@ export function Row({ r, kids = [], fields, q, open, onOpen, folded, onFold }) {
 const FILE = { '?': [DiffAddedIcon, 'new'], A: [DiffAddedIcon, 'add'], D: [DiffRemovedIcon, 'del'], R: [DiffRenamedIcon, 'mod'], C: [DiffRenamedIcon, 'mod'], U: [AlertIcon, 'del'] }
 
 // The reading pane: everything about the open repo. Esc closes it.
-export function Details({ r, fields, q, onMeta, onFields, onSelect, onClose }) {
+export function Details({ r, fields, q, onMeta, onAbout, onFields, onSelect, onClose }) {
   useEffect(() => {
     const onKey = (e) => e.key === 'Escape' && !document.querySelector('dialog[open]') && onClose() // Esc in a dialog closes only the dialog
     addEventListener('keydown', onKey)
@@ -145,6 +146,9 @@ export function Details({ r, fields, q, onMeta, onFields, onSelect, onClose }) {
             {r.parent && <><button className="crumb" onClick={() => onSelect(r.parent)} title="Open parent repo">{baseName(r.parent)}</button><span className="crumb"> / </span></>}
             <Hi text={r.name} q={q} />
           </h2>
+        </div>
+        <div className="details__more">{/* full width, under the title and the close button */}
+          <About key={r.path + '|' + r.about} r={r} q={q} onSave={onAbout} />
           <code><Hi text={r.path} q={q} /></code>
         </div>
         <Actions r={r} />

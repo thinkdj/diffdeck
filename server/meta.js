@@ -39,7 +39,18 @@ export function withMeta(cfg, repo) {
     const v = Object.hasOwn(stored, f.key) ? stored[f.key] : f.default
     if (v != null) meta[f.key] = v
   }
-  return { ...repo, meta }
+  return { ...repo, meta, about: cfg.about?.[repo.path] ?? '' }
+}
+
+// A repo's description: free text with a little markdown (src/inline.js renders it), up to 1,000 characters.
+// Kept in cfg.about by repo path, next to the metadata. Empty deletes it.
+export function setAbout(cfg, { path, text } = {}) {
+  if (typeof path !== 'string' || !path) throw new Error('Which repo?')
+  if (text != null && typeof text !== 'string') throw new Error('A description is text.')
+  text = (text ?? '').trim()
+  if (text.length > 1000) throw new Error('Keep the description under 1,000 characters.')
+  const { [path]: _, ...about } = cfg.about ?? {}
+  return { ...cfg, about: text ? { ...about, [path]: text } : about }
 }
 
 // Add a field, or change one: `was` names the field being edited. `repo` makes it local to that repo (it can't

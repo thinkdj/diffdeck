@@ -25,7 +25,9 @@ Notes for coding agents (and people) working on diffdeck. The README covers what
 
 ## Metadata
 
-- Config shape: `fields: [{ key, desc, type, repo? }]` and `meta: { "<repo path>": { [key]: value } }`. Types: `boolean`, `string`, `text`, `date` (`YYYY-MM-DD`, what `<input type="date">` gives).
+- Config shape: `fields: [{ key, desc, type, default?, repo? }]`, `meta: { "<repo path>": { [key]: value } }` and `about: { "<repo path>": text }`, the repo description (`setAbout`, `POST /about`, up to 1,000 characters, `r.about` on the page).
+- A description renders through `inline()` in `src/inline.js`: `*bold*`, `_italic_`, `[text](url)` and bare URLs, as tokens turned into React elements, never HTML. Only http(s) links pass `safeUrl`; anything else stays text. Keep it that way: no `dangerouslySetInnerHTML`.
+- Types: `boolean`, `string`, `text`, `date` (`YYYY-MM-DD`, what `<input type="date">` gives).
 - **Fields are defined globally, values are per repo.** A field without `repo` is Global (every repo has it); with `repo` it is Local to that one path. `fieldsFor(fields, path)` gives a repo's fields, globals first, and every UI place (list rows, details, search, the dialog) goes through it. A field is identified by `key` plus `repo`, so edits and deletes send both (`DELETE /fields?key=&repo=`).
 - Names are unique among the fields one repo can see: globals never share a name, and a local can't take a global's name (or a global a local's), so `meta[path][key]` is never ambiguous. Two repos may each have a local with the same name. Scope is fixed at creation; there is no promote or demote.
 - `server/meta.js` holds all the rules as **pure functions** (`saveField`, `removeField`, `setValue`, `withMeta`). The API and the demo both use them, so they must stay free of Node APIs. Validation lives there: name up to 40 characters, description up to 200, short text up to 200 with no line breaks, long text up to 10,000. `src/Meta.jsx` mirrors the text limits as `maxLength` (`LIMIT`); change both together.
@@ -60,7 +62,7 @@ Notes for coding agents (and people) working on diffdeck. The README covers what
 
 ## Tests, builds, releases
 
-- `pnpm test` runs `node --test` on `server/*.test.js` (plain `node:test` and `assert`, no framework). Test files are left out of the npm package.
+- `pnpm test` runs `node --test` on `server/*.test.js` and `src/inline.test.js` (plain `node:test` and `assert`, no framework). Test files are left out of the npm package.
 - Check `pnpm build` and `pnpm build:demo` after UI changes.
 - Releases: `pnpm release` (or `:minor`, `:major`, `:beta`) from a clean `main`. npm needs the owner's security key, so agents don't publish; the owner runs it in their own terminal. Note user-facing changes in `CHANGELOG.md` under **Unreleased**.
 - Commits: plain human titles, no `feat:` style prefixes, no co-author trailers, no URLs in messages.

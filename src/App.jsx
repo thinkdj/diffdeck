@@ -23,8 +23,8 @@ const FILTERS = [
   ['unpushed', 'Unpushed', (r) => r.ahead > 0 || (!r.error && !r.upstream && !detached(r))],
   ['behind', 'Behind', (r) => r.behind > 0],
 ]
-// What search looks through: the repo's name, branch, path, recent commit subjects and uncommitted file paths.
-const contents = (r) => [r.name, r.branch, r.path, ...(r.commits ?? []).map((c) => c.subject), ...(r.files ?? []).map((f) => f.path)].join('\n').toLowerCase()
+// What search looks through: the repo's name, branch, path, description, recent commit subjects and uncommitted file paths.
+const contents = (r) => [r.name, r.branch, r.path, r.about, ...(r.commits ?? []).map((c) => c.subject), ...(r.files ?? []).map((f) => f.path)].join('\n').toLowerCase()
 // Sorts work on groups: a repo plus the repos nested in it.
 const newest = (g) => Math.max(...[g.r, ...g.kids].map((x) => x.commits?.[0]?.time ?? 0))
 const SORTS = {
@@ -151,6 +151,7 @@ export default function App() {
   }
   const browse = () => post('/pick', {}) // native dialog, adds the pick
   const saveMeta = (path, key, value) => post('/meta', { path, key, value })
+  const saveAbout = (path, text) => post('/about', { path, text })
   const openFields = (r) => { setError(''); setFieldsRepo(r) }
 
   const view = DEMO && showEmpty && data ? { roots: [], repos: [], fields: [] } : data
@@ -248,7 +249,7 @@ export default function App() {
 
         <main className="main">
           {selected ? (
-            <Details r={selected} fields={fields} q={needle} onMeta={saveMeta} onFields={openFields} onSelect={setOpen} onClose={close} />
+            <Details r={selected} fields={fields} q={needle} onMeta={saveMeta} onAbout={saveAbout} onFields={openFields} onSelect={setOpen} onClose={close} />
           ) : data && !roots.length ? (
             <div className="empty">
               <RepoIcon size={32} />

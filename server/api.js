@@ -4,7 +4,7 @@ import fs from 'node:fs'
 import os from 'node:os'
 import path from 'node:path'
 import { status } from './git.js'
-import { removeField, saveField, setValue, withMeta } from './meta.js'
+import { removeField, saveField, setAbout, setValue, withMeta } from './meta.js'
 import { pickFolder } from './pickFolder.js'
 
 // Rarely used by other dev tools, and fixed so the page keeps its origin (the saved theme lives per origin).
@@ -122,6 +122,10 @@ export default async function api(req, res) {
     }
     if (pathname === '/fields' && req.method === 'DELETE') {
       save(removeField(load(), searchParams.get('key'), searchParams.get('repo')))
+      return send(200, await list())
+    }
+    if (pathname === '/about' && req.method === 'POST') { // { path, text }: a repo's description
+      save(setAbout(load(), await readJson(req)))
       return send(200, await list())
     }
     if (pathname === '/meta' && req.method === 'POST') {

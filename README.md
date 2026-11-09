@@ -10,7 +10,7 @@ npx diffdeck
 
 That starts diffdeck on your machine at http://localhost:4747 and opens it. Run it again while it is open and it just brings the page back up. Options: `--port <n>`, `--no-open`.
 
-The page is laid out like an inbox: the list of repos on the left, the one you picked on the right, with its uncommitted files, recent commits, package.json scripts and dependencies, and metadata. Move with the arrow keys, press `/` to search names, branches, commits and file paths (matches are highlighted), and filter by status or by your own metadata fields. Open **Watching** under the list to add a repo path or a folder that holds repos, or click Browse. Each path is checked one level down, and any repo found is checked one level down for nested repos, which sit indented under their parent in the list. Your list is stored in `~/.diffdeck.json`.
+The page is laid out like an inbox: the list of repos on the left, the one you picked on the right, with its description, uncommitted files, recent commits, package.json scripts and dependencies, and metadata. Click under a repo's name to give it a description: `*bold*`, `_italic_` and links work, and Enter saves. Move with the arrow keys, press `/` to search names, branches, commits and file paths (matches are highlighted), and filter by status or by your own metadata fields. Open **Watching** under the list to add a repo path or a folder that holds repos, or click Browse. Each path is checked one level down, and any repo found is checked one level down for nested repos, which sit indented under their parent in the list. Your list is stored in `~/.diffdeck.json`.
 
 ## Metadata
 

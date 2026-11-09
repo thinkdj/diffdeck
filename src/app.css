@@ -179,12 +179,27 @@ mark { padding: 0 1px; border-radius: 3px; background: var(--sun-soft); color: i
 /* title + close on the first row, actions on their own row below */
 .details__head { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: start; gap: 14px 12px; }
 .details__head > .ibtn { grid-area: 1 / 2; }
-.details__head > .actions { grid-column: 1 / -1; }
+.details__head > .actions, .details__more { grid-column: 1 / -1; }
+.details__more { margin-top: -10px; } /* sits close under the title */
 .details__head h2 { font: 700 24px/30px var(--display); letter-spacing: -.02em; overflow-wrap: anywhere; }
 .crumb { padding: 0; border: 0; background: none; font: inherit; letter-spacing: inherit; color: var(--ink-muted); }
 button.crumb { cursor: pointer; }
 button.crumb:hover { color: var(--sprout-ink); text-decoration: underline; text-underline-offset: 4px; }
-.details__head code { display: block; margin-top: 2px; font-size: 13px; color: var(--ink-muted); overflow-wrap: anywhere; }
+/* the description: reads as text, edits in place */
+.about { margin: 0 0 6px; cursor: text; }
+.about p { padding: 4px 0; font-size: 15px; line-height: 23px; white-space: pre-line; overflow-wrap: anywhere; }
+.about p.muted { font-style: italic; }
+.about em { font-style: italic; }
+.about b { font-weight: 650; }
+.about a { text-decoration: underline; text-decoration-color: color-mix(in srgb, currentColor 40%, transparent); text-underline-offset: 3px; }
+.about a:hover { text-decoration-color: currentColor; }
+.about .ibtn { width: 26px; height: 26px; margin: -2px 0 -6px 4px; vertical-align: baseline; opacity: 0; } /* inline after the text, so it takes no column */
+.about:hover .ibtn, .about .ibtn:focus-visible { opacity: 1; }
+@media (hover: none) { .about .ibtn { opacity: 1; } }
+.about--edit { display: grid; grid-template-columns: minmax(0, 1fr); gap: 4px; cursor: auto; } /* a full-width column: field-sizing would otherwise shrink it to the text */
+.about--edit textarea { width: 100%; min-height: 36px; font-size: 15px; line-height: 23px; field-sizing: content; resize: none; }
+.about--edit small { font-size: 12px; line-height: 16px; }
+.details__head code { display: block; font-size: 13px; color: var(--ink-muted); overflow-wrap: anywhere; }
 .details__status { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 20px; padding: 12px 16px; border-radius: var(--r-md); background: var(--surface-sunk); }
 .details__cols { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(300px, 100%), 1fr)); gap: 20px 40px; }
 .details section { display: grid; align-content: start; gap: 10px; min-width: 0; }

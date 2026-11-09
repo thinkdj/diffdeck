@@ -2,7 +2,7 @@
 // A solo founder's ~/code: one SaaS with its api and web, a landing page, a mobile app, a browser extension,
 // a newsletter, a support bot with its prompts, and a blog. Times are relative to now so the demo never ages.
 // Metadata edits really work here, through the same functions the server uses, but live only until you reload.
-import { removeField, saveField, setValue, withMeta } from '../server/meta.js'
+import { removeField, saveField, setAbout, setValue, withMeta } from '../server/meta.js'
 
 const ROOT = '/Users/sam/code'
 const now = Math.floor(Date.now() / 1000)
@@ -148,6 +148,12 @@ let cfg = {
     { key: 'App Store', desc: 'Is the latest build live in the store?', type: 'boolean', repo: at('mobile-app') },
     { key: 'Stripe mode', desc: 'Which Stripe keys this branch uses', type: 'string', repo: at('invoice-app/api') },
   ],
+  about: {
+    [at('invoice-app')]: 'The *invoicing SaaS*: api and web in one pnpm workspace.',
+    [at('invoice-app/api')]: 'Billing backend on _Fastify + Postgres_. *Stripe webhooks* land here. Docs: https://stripe.com/docs/webhooks',
+    [at('mobile-app')]: 'iOS and Android app for invoices on the go. *1.4 is in review.*',
+    [at('newsletter')]: 'The weekly founder newsletter, written in _plain markdown_.',
+  },
   meta: {
     [at('invoice-app')]: { Live: true, Stack: 'pnpm workspace', 'Review by': inDays(7) },
     [at('invoice-app/api')]: { Live: true, Stack: 'Fastify + Postgres', 'Stripe mode': 'Test', Notes: 'Stripe keys live in the password manager, never in .env.\nThe webhook secret rotates every 90 days.' },
@@ -170,6 +176,7 @@ export async function demoApi(url, opts = {}) {
   if (pathname === '/fields' && method === 'POST') cfg = saveField(cfg, body)
   else if (pathname === '/fields' && method === 'DELETE') cfg = removeField(cfg, searchParams.get('key'), searchParams.get('repo'))
   else if (pathname === '/meta') cfg = setValue(cfg, body)
+  else if (pathname === '/about') cfg = setAbout(cfg, body)
   else if (method !== 'GET') throw new Error('This demo shows sample repos. Run npx diffdeck on your computer to watch your own.')
   return view()
 }

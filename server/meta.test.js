@@ -1,6 +1,6 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
-import { fieldsFor, removeField, saveField, setValue, withMeta } from './meta.js'
+import { fieldsFor, removeField, saveField, setAbout, setValue, withMeta } from './meta.js'
 
 const P = '/code/app'
 
@@ -59,6 +59,15 @@ test('a default fills repos without a value, and clearing beats it', () => {
   cfg = saveField(cfg, { was: 'Live', key: 'Live', type: 'boolean' }) // default dropped: the null goes with it
   assert.deepEqual(cfg.meta[P], { Stack: 'Go' })
   assert.throws(() => saveField(cfg, { key: 'Due', type: 'date', default: 'soon' }), /default for Due takes a date/)
+})
+
+test('a description is set, trimmed and cleared', () => {
+  let cfg = setAbout({}, { path: P, text: '  Billing *api*  ' })
+  assert.equal(withMeta(cfg, { path: P }).about, 'Billing *api*')
+  assert.equal(withMeta(cfg, { path: '/other' }).about, '')
+  cfg = setAbout(cfg, { path: P, text: '' })
+  assert.deepEqual(cfg.about, {})
+  assert.throws(() => setAbout(cfg, { path: P, text: 'x'.repeat(1001) }), /1,000/)
 })
 
 test('bad input is refused with a readable message', () => {
