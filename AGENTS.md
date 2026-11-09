@@ -11,8 +11,9 @@ Notes for coding agents (and people) working on diffdeck. The README covers what
 
 ## Server
 
-- `server/git.js` is the only place that runs git: `execFile('git', ['--no-optional-locks', '-c', 'core.quotepath=false', ...])`. `--no-optional-locks` keeps `status` from touching the index, and `core.quotepath=false` keeps non-ASCII paths readable. `status()` never throws: a broken repo comes back as `{ error }` and shows as an Error card.
+- `server/git.js` is the only place that runs git: `execFile('git', ['--no-optional-locks', '-c', 'core.quotepath=false', ...])`. `--no-optional-locks` keeps `status` from touching the index, and `core.quotepath=false` keeps non-ASCII paths readable. `status()` never throws: a broken repo comes back as `{ error }` and shows as an Error row.
 - Status comes from `git status --porcelain=v2 --branch --show-stash`, `git log -5` and `git remote -v`. `files` is capped at 200, but `changed` is the real count. `webUrl()` strips credentials, so only a clean https URL ever reaches the page.
+- `pkg` comes from `readPkg()` in `server/api.js`: the repo's `package.json` scripts, dependencies and devDependencies (string values only), or `null` when there is none. The page (`src/Pkg.jsx`) shows ten of each and the rest in a side sheet, a native `<dialog>` like the others.
 - Discovery (`server/api.js`): a watched path is either a repo or a folder of repos (one level down). Every repo found is checked one more level down for nested repos, which carry `parent`. A repo found twice is listed once.
 - Added paths are cleaned: surrounding quotes stripped (Explorer's "Copy as path"), `~` expanded, the Windows drive letter uppercased (so `v:\` and `V:\` are the same root).
 - `load()` refuses to go on if `~/.diffdeck.json` exists but can't be parsed, so a hand-edited typo is never overwritten. Missing file means empty config.
@@ -25,28 +26,30 @@ Notes for coding agents (and people) working on diffdeck. The README covers what
 ## Metadata
 
 - Config shape: `fields: [{ key, desc, type, repo? }]` and `meta: { "<repo path>": { [key]: value } }`. Types: `boolean`, `string`, `text`, `date` (`YYYY-MM-DD`, what `<input type="date">` gives).
-- **Fields are defined globally, values are per repo.** A field without `repo` is Global (every repo has it); with `repo` it is Local to that one path. `fieldsFor(fields, path)` gives a repo's fields, globals first, and every UI place (cards, details, search, the dialog) goes through it. A field is identified by `key` plus `repo`, so edits and deletes send both (`DELETE /fields?key=&repo=`).
+- **Fields are defined globally, values are per repo.** A field without `repo` is Global (every repo has it); with `repo` it is Local to that one path. `fieldsFor(fields, path)` gives a repo's fields, globals first, and every UI place (list rows, details, search, the dialog) goes through it. A field is identified by `key` plus `repo`, so edits and deletes send both (`DELETE /fields?key=&repo=`).
 - Names are unique among the fields one repo can see: globals never share a name, and a local can't take a global's name (or a global a local's), so `meta[path][key]` is never ambiguous. Two repos may each have a local with the same name. Scope is fixed at creation; there is no promote or demote.
 - `server/meta.js` holds all the rules as **pure functions** (`saveField`, `removeField`, `setValue`, `withMeta`). The API and the demo both use them, so they must stay free of Node APIs. Validation lives there: name up to 40 characters, description up to 200, short text up to 200 with no line breaks, long text up to 10,000. `src/Meta.jsx` mirrors the text limits as `maxLength` (`LIMIT`); change both together.
 - Empty values (`''`, `false`, `null`) are never stored; they delete the key, and a repo with no values left is dropped from `meta`. A Yes / No field is therefore either `true` or absent.
 - Renaming a field (`was` → `key`) moves its values; a type change keeps only values that fit the new type. Field names that exist on `Object.prototype` (`constructor`, `__proto__`, …) are refused, so plain `obj[key]` lookups stay safe.
 - Values and local fields are keyed by the repo's absolute path. Moving a repo loses its metadata; removing a watched folder keeps it (it comes back if you re-add the folder).
 - The fields dialog is opened from one repo's details (`FieldsDialog repo={r}`): it lists the globals and that repo's locals, and the scope choice ("Every repo" / "Only <name>") shows only when adding.
-- Inputs in the details panel are **uncontrolled** and keyed by their saved value, so a fresh value from the server remounts them while the input you moved to keeps focus. Text and dates save on blur or Enter (Ctrl+Enter in long text), switches on change, and nothing is sent when the value didn't change. Esc in an input undoes the edit and stops propagation, so it doesn't close the panel.
+- Inputs in the details pane are **uncontrolled** and keyed by their saved value, so a fresh value from the server remounts them while the input you moved to keeps focus. Text and dates save on blur or Enter (Ctrl+Enter in long text), switches on change, and nothing is sent when the value didn't change. Esc in an input undoes the edit and stops propagation, so it doesn't close the pane.
 
 ## Page
 
-- Cards are **groups**: a top-level repo plus its nested repos (`kids`). Filters, search and sort work on groups; a group shows if the parent or any kid matches. Search covers name, branch and metadata (`metaText`).
-- Status: `badges()` in `src/Repo.jsx` decides the pills and their tone (`bad`, `warn`, `ok`, plain). The status dot shows the worst tone of the repo and its kids, with the reasons in a tooltip.
-- The details panel is inserted into the grid right after the **last card of the open card's row**. The column count comes from a ResizeObserver on the grid (`cols`), and `GAP` is used both as the grid gap and to aim the caret at the open card. If you change the gap, change `GAP`.
+- Inbox layout: the list (`aside.side`) on the left, the open repo (`main`) on the right, each scrolling on its own inside a `100dvh` page. Under 860px only one shows: the list, or the open repo with its X going back.
+- The list is a tree of **groups**: a top-level repo plus its nested repos (`kids`), which sit indented under it and fold with the arrow (`folded`, a Set of parent paths). Filters, search and sort work on groups; a group shows if the parent or any kid matches. Search covers contents only (`contents()`: name, branch, path, commit subjects, file paths) and `Hi` highlights matches; metadata has its own filters (`src/Filters.jsx`, `metaHit`), one select per field, with a filter on a local field matching only the repo that has it. `rowsRef` holds the rows on screen in order, which is what the arrow keys walk.
+- Status: `badges()` in `src/Repo.jsx` decides the pills and their tone (`bad`, `warn`, `ok`, plain). Each row has a status dot with the reasons in a tooltip; a folded parent's dot also covers its hidden kids.
+- In demo mode an **Empty state** button in the top bar swaps `data` for an empty `view`, so the hosted demo can show the first-run page.
+- Keys outside inputs and dialogs: `/` focuses search, up and down move the selection, Esc closes the open repo. Watched folders and the add bar live in a native `<details>` under the list; with no folders yet, the add bar sits in the empty state instead.
 - The page refreshes on window focus (coming back from the editor). `refresh()` dedupes overlapping calls through `inflight`.
-- Dialogs are native `<dialog>` with `showModal()`: `useConfirm()` in `src/Confirm.jsx` and `FieldsDialog` in `src/Meta.jsx`. Render a confirm **outside** another dialog's React tree, or its Esc reaches the outer dialog's `onCancel`. The details panel ignores Esc while any dialog is open.
+- Dialogs are native `<dialog>` with `showModal()`: `useConfirm()` in `src/Confirm.jsx` and `FieldsDialog` in `src/Meta.jsx`. Render a confirm **outside** another dialog's React tree, or its Esc reaches the outer dialog's `onCancel`. The details pane ignores Esc while any dialog is open.
 - Errors from the API show in the page notice; `FieldsDialog` shows the same `error`, because the page notice is hidden behind the modal.
 
 ## Styles
 
 - `src/app.css`, one file, tokens from the cdn.farm design system ("Glacier" accent). Light and dark are `[data-theme]` on `<html>`, set in `index.html` before first paint to avoid a flash.
-- Breakpoints: 860px (tablet: filters get their own row, the tree stacks) and 640px (phone: icon-only Refresh, add bar wraps, tooltips fixed along the bottom of the screen). Inputs are 16px on phones so iOS doesn't zoom. Cards only lift on hover with a real mouse on wide screens, because a transform would trap the fixed tooltip inside the card.
+- Breakpoints: 860px (one pane at a time, the page scrolls as a whole) and 640px (phone: icon-only Refresh, the empty-state add bar wraps, tooltips fixed along the bottom of the screen). Inputs are 16px on phones so iOS doesn't zoom. In the list the tooltip opens to the right of the dot, so the pane's edge never clips it.
 - Long labels shorten with an ellipsis (`min-width: 0` plus `overflow: hidden` on a `<span>`), never by overflowing the page.
 
 ## Demo

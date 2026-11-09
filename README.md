@@ -10,7 +10,7 @@ npx diffdeck
 
 That starts diffdeck on your machine at http://localhost:4747 and opens it. Run it again while it is open and it just brings the page back up. Options: `--port <n>`, `--no-open`.
 
-Paste a repo path, or a folder that holds repos, into the add bar, or click Browse. Each path is checked one level down, and any repo found is checked one level down for nested repos, which show inside their parent's card. Your list is stored in `~/.diffdeck.json`.
+The page is laid out like an inbox: the list of repos on the left, the one you picked on the right, with its uncommitted files, recent commits, package.json scripts and dependencies, and metadata. Move with the arrow keys, press `/` to search names, branches, commits and file paths (matches are highlighted), and filter by status or by your own metadata fields. Open **Watching** under the list to add a repo path or a folder that holds repos, or click Browse. Each path is checked one level down, and any repo found is checked one level down for nested repos, which sit indented under their parent in the list. Your list is stored in `~/.diffdeck.json`.
 
 ## Metadata
 
@@ -21,16 +21,16 @@ Fields are defined once and filled per repo. The scope says which repos have the
 - **Global**: every repo, for things you track everywhere, like **Uses Stripe** or **Stack**.
 - **Local**: only the repo you added it from, for something only that repo needs, like **App Store** on a mobile app.
 
-Local fields carry a **Local** tag in the details panel; global ones have no tag. A local field can't reuse the name of a global one, and the scope is fixed once the field is added. The types:
+Local fields carry a **Local** tag in the details pane; global ones have no tag. A local field can't reuse the name of a global one, and the scope is fixed once the field is added. The types:
 
-| Type | Input | On the card |
+| Type | Input | In the list |
 |---|---|---|
 | Yes / No | switch | a tag with the name, when on |
 | Short text | one line, up to 200 characters | name and value |
-| Long text | multi-line box, up to 10,000 characters | details panel only |
+| Long text | multi-line box, up to 10,000 characters | details pane only |
 | Date | date picker | name and date |
 
-Then fill the fields in each repo's details panel. Every input saves by itself: a switch on toggle, text and dates on Enter or when you leave the box (Ctrl+Enter in long text), and Esc undoes an edit you haven't saved. Search matches metadata values too, so searching `stripe` finds every repo with **Uses Stripe** switched on.
+Then fill the fields in each repo's details pane. Every input saves by itself: a switch on toggle, text and dates on Enter or when you leave the box (Ctrl+Enter in long text), and Esc undoes an edit you haven't saved. Under the status filter, **Metadata** gives you one filter per field: Yes / No, a pick from the values in use for short text, Overdue / Next 7 days / Later for dates, Has text / Empty for long text. Active filters show as chips you can drop.
 
 Fields and values live in `~/.diffdeck.json`, keyed by repo path, never in the repo itself:
 
