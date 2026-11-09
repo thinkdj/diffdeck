@@ -5,7 +5,7 @@ import { MetaSection, Tags } from './Meta.jsx'
 import { PkgSection, depRow, depsOf, scriptRow, scriptsOf } from './Pkg.jsx'
 import {
   AlertIcon, ArchiveIcon, ArrowDownIcon, ArrowUpIcon, CheckIcon, ChevronDownIcon, ChevronRightIcon, CloudOfflineIcon, CodeIcon,
-  CopyIcon, DiffAddedIcon, DiffModifiedIcon, DiffRemovedIcon, DiffRenamedIcon, FileDiffIcon, GitBranchIcon, GitCommitIcon,
+  CopyIcon, DiffAddedIcon, DiffModifiedIcon, DiffRemovedIcon, DiffRenamedIcon, FileDiffIcon, FileSubmoduleIcon, GitBranchIcon, GitCommitIcon,
   LinkExternalIcon, MarkGithubIcon, RepoPushIcon, XCircleIcon, XIcon,
 } from '@primer/octicons-react'
 
@@ -88,31 +88,41 @@ function Actions({ r }) {
   )
 }
 
-// One row of the list: a top-level repo, with a fold arrow when repos are nested in it, or a nested repo.
-// Two lines: name, compact pills and age; then branch and the last commit. Filled metadata shows as tags under them.
+// One row of the list: a top-level repo or a nested one, so no row spends width on a fold arrow.
+// Line 1: name, compact pills and age. Line 2: branch and the last commit.
+// Line 3, when there is something for it: a parent's nested-repo count first (it folds and unfolds them), then metadata tags.
+// Double-clicking a parent row also folds it. The fold button can't sit inside the row's button, so line 3 is its own strip; a click on its tags opens the repo too.
 export function Row({ r, kids = [], fields, q, open, onOpen, folded, onFold }) {
   const last = r.commits?.[0]
   const isOpen = open === r.path
   return (
-    <div className={`row${isOpen ? ' is-open' : ''}`}>
-      {onFold && (
-        <button className="row__chev" onClick={() => onFold(r.path)} disabled={!kids.length} aria-expanded={!folded} aria-label={`${folded ? 'Show' : 'Hide'} repos in ${r.name}`}>
-          {kids.length > 0 && (folded ? <ChevronRightIcon size={14} /> : <ChevronDownIcon size={14} />)}
-        </button>
-      )}
+    <div
+      className={`row${isOpen ? ' is-open' : ''}`}
+      onDoubleClick={(e) => kids.length > 0 && !e.target.closest('.row__fold') && onFold(r.path)} // the fold button already toggled on each click
+    >
       <StatusDot r={r} kids={folded ? kids : []} /> {/* folded: the dot speaks for the hidden nested repos too */}
-      <button className="row__hit" onClick={() => onOpen(r.path)} aria-current={isOpen || undefined}>
-        <span className="row__top">
-          <span className="row__name"><Hi text={r.name} q={q} /></span>
-          <Pills r={r} compact />
-          {last && <small className="row__ago" title={when(last.time)}>{ago(last.time)}</small>}
-        </span>
-        <span className="row__sub">
-          <GitBranchIcon size={12} /><span className="row__branch"><Hi text={branchOf(r)} q={q} /></span>
-          <span className="row__subject">{r.error ? 'Error' : last ? <Hi text={last.subject} q={q} /> : 'No commits yet'}</span>
-        </span>
-        <Tags r={r} fields={fields} />
-      </button>
+      <div className="row__body">
+        <button className="row__hit" onClick={() => onOpen(r.path)} aria-current={isOpen || undefined}>
+          <span className="row__top">
+            {r.parent && <FileSubmoduleIcon size={14} className="row__kind" />}
+            <span className="row__name"><Hi text={r.name} q={q} /></span>
+            <Pills r={r} compact />
+            {last && <small className="row__ago" title={when(last.time)}>{ago(last.time)}</small>}
+          </span>
+          <span className="row__sub">
+            <GitBranchIcon size={12} /><span className="row__branch"><Hi text={branchOf(r)} q={q} /></span>
+            <span className="row__subject">{r.error ? 'Error' : last ? <Hi text={last.subject} q={q} /> : 'No commits yet'}</span>
+          </span>
+        </button>
+        <div className="row__foot" onClick={(e) => !e.target.closest('.row__fold') && onOpen(r.path)}>
+          {kids.length > 0 && (
+            <button className="row__fold" onClick={() => onFold(r.path)} aria-expanded={!folded} title={`${folded ? 'Show' : 'Hide'} ${kids.length} nested ${kids.length === 1 ? 'repo' : 'repos'}`}>
+              {folded ? <ChevronRightIcon size={12} /> : <ChevronDownIcon size={12} />}<FileSubmoduleIcon size={12} />{kids.length}
+            </button>
+          )}
+          <Tags r={r} fields={fields} />
+        </div>
+      </div>
     </div>
   )
 }

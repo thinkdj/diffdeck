@@ -14,7 +14,7 @@ The page is laid out like an inbox: the list of repos on the left, the one you p
 
 ## Metadata
 
-Describe your repos with fields of your own. Open any repo's details, click **Add a field** (or **Edit fields**), and give it a name, an optional description, a scope and a type.
+Describe your repos with fields of your own. Open any repo's details, click **Add a field** (or **Edit fields**), and give it a name, an optional description, a scope, a type and an optional default value. Leave **NULL** checked for no default; otherwise every repo without a value of its own shows the default, until you change or clear it there.
 
 Fields are defined once and filled per repo. The scope says which repos have the field:
 
@@ -26,9 +26,9 @@ Local fields carry a **Local** tag in the details pane; global ones have no tag.
 | Type | Input | In the list |
 |---|---|---|
 | Yes / No | switch | a tag with the name, when on |
-| Short text | one line, up to 200 characters | name and value |
+| Short text | one line, up to 200 characters | the value, name on hover |
 | Long text | multi-line box, up to 10,000 characters | details pane only |
-| Date | date picker | name and date |
+| Date | date picker | the date, name on hover |
 
 Then fill the fields in each repo's details pane. Every input saves by itself: a switch on toggle, text and dates on Enter or when you leave the box (Ctrl+Enter in long text), and Esc undoes an edit you haven't saved. Under the status filter, **Metadata** gives you one filter per field: Yes / No, a pick from the values in use for short text, Overdue / Next 7 days / Later for dates, Has text / Empty for long text. Active filters show as chips you can drop.
 

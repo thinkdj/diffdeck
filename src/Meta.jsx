@@ -15,15 +15,18 @@ const LIMIT = { string: 200, text: 10_000 } // same limits server/meta.js checks
 export const Scope = ({ f }) => f.repo && <span className="scope" title="Only this repo has this field">Local</span>
 const day = (v) => new Date(v + 'T00:00').toLocaleDateString([], { day: 'numeric', month: 'short', year: 'numeric' }) // T00:00: local, not UTC
 
-// In the list: one quiet tag per filled field. Long text stays in the details pane.
+// In the list: one quiet tag per filled field, compact so they share one line. Yes / No shows its name, short text and
+// dates just the value (the name is in the tooltip). Long text stays in the details pane.
 export function Tags({ r, fields }) {
   const set = fieldsFor(fields, r.path).filter((f) => f.type !== 'text' && r.meta?.[f.key] !== undefined)
   if (!set.length) return null
   return (
     <span className="tags">
       {set.map((f) => (
-        <span key={f.key} className="tag">
-          {f.type === 'boolean' ? <><CheckIcon size={12} />{f.key}</> : <>{f.key}<b>{f.type === 'date' ? day(r.meta[f.key]) : r.meta[f.key]}</b></>}
+        <span key={f.key} className="tag" title={f.type === 'boolean' ? f.key : `${f.key}: ${r.meta[f.key]}`}>
+          {f.type === 'boolean' && <CheckIcon size={12} />}
+          {f.type === 'date' && <CalendarIcon size={12} />}
+          <b>{f.type === 'boolean' ? f.key : f.type === 'date' ? day(r.meta[f.key]) : r.meta[f.key]}</b>
         </span>
       ))}
     </span>
@@ -83,18 +86,20 @@ export function FieldsDialog({ repo, fields: all, busy, error, post, remove, onC
   const [edit, setEdit] = useState(null) // the field being edited, null when adding
   const [type, setType] = useState('boolean')
   const [scope, setScope] = useState('global')
+  const [noDefault, setNoDefault] = useState(true) // the NULL box: no default value
   const [confirm, confirmUI] = useConfirm()
   useEffect(() => { ref.current.showModal() }, [])
 
   const fields = fieldsFor(all, repo.path)
   const isEdit = (f) => edit?.key === f.key && edit?.repo === f.repo
-  const pick = (f) => { setEdit(f); setType(f?.type ?? 'boolean') }
+  const pick = (f) => { setEdit(f); setType(f?.type ?? 'boolean'); setNoDefault(f?.default == null) }
   const submit = async (e) => {
     e.preventDefault()
     const form = e.currentTarget
-    const { key, desc } = form.elements
+    const { key, desc, def } = form.elements
     const where = edit ? edit.repo : scope === 'local' ? repo.path : undefined
-    if (await post('/fields', { was: edit?.key, key: key.value, desc: desc.value, type, repo: where })) {
+    const value = noDefault ? null : type === 'boolean' ? def.checked : def.value
+    if (await post('/fields', { was: edit?.key, key: key.value, desc: desc.value, type, repo: where, default: value })) {
       form.reset()
       pick(null)
     }
@@ -117,7 +122,7 @@ export function FieldsDialog({ repo, fields: all, busy, error, post, remove, onC
           return (
             <li key={f.key} className={isEdit(f) ? 'is-open' : ''}>
               <Icon size={16} />
-              <span><b>{f.key}</b><small>{TYPES[f.type]}{f.desc && ` · ${f.desc}`}</small></span>
+              <span><b>{f.key}</b><small>{TYPES[f.type]}{f.default != null && ` · default ${f.default === true ? 'Yes' : f.default}`}{f.desc && ` · ${f.desc}`}</small></span>
               <button className="ibtn" onClick={() => pick(f)} title="Edit" aria-label={`Edit ${f.key}`}><PencilIcon size={16} /></button>
               <button className="ibtn ibtn--danger" onClick={() => drop(f)} title="Delete" aria-label={`Delete ${f.key}`}><TrashIcon size={16} /></button>
             </li>
@@ -148,11 +153,24 @@ export function FieldsDialog({ repo, fields: all, busy, error, post, remove, onC
           <form className="fform" onSubmit={submit} key={`${edit?.repo ?? ''}|${edit?.key ?? 'new'}`}>
             <p className="label">{edit ? `Edit ${edit.key}` : 'Add a field'}{edit && <Scope f={edit} />}</p>
             {!edit && (
-              <div className="fform__type">For<Seg label="Scope" value={scope} onChange={setScope} options={[['global', 'Every repo', GlobeIcon], ['local', `Only ${repo.name}`, RepoIcon]]} /></div>
+              <div className="fform__type">For<Seg label="Scope" value={scope} onChange={setScope} options={[['global', 'Every repo', GlobeIcon], ['local', `Only “${repo.name}”`, RepoIcon]]} /></div>
             )}
             <label>Name<input className="field" name="key" defaultValue={edit?.key} placeholder="Uses Stripe" maxLength={40} required autoComplete="off" autoFocus /></label>
             <label>Description <i>optional, shown under the name</i><input className="field" name="desc" defaultValue={edit?.desc} placeholder="Takes payments through Stripe" maxLength={200} autoComplete="off" /></label>
             <div className="fform__type">Type<Seg label="Type" value={type} onChange={setType} options={Object.entries(TYPES).map(([k, text]) => [k, text, ICON[k]])} /></div>
+            <div className="fform__type">
+              <span>Default value <i>what repos without their own value show</i></span>
+              <div className="fdefault" key={type /* a fresh input when the type changes */}>
+                {type === 'boolean' ? (
+                  <input type="checkbox" role="switch" className="switch" name="def" defaultChecked={edit?.default === true} disabled={noDefault} aria-label="Default value" />
+                ) : type === 'text' ? (
+                  <textarea className="field" name="def" rows={2} defaultValue={edit?.type === 'text' ? edit.default ?? '' : ''} maxLength={LIMIT.text} disabled={noDefault} aria-label="Default value" />
+                ) : (
+                  <input className="field" type={type === 'date' ? 'date' : 'text'} name="def" defaultValue={edit?.type === type ? edit.default ?? '' : ''} maxLength={LIMIT[type]} disabled={noDefault} aria-label="Default value" autoComplete="off" />
+                )}
+                <label className="fnull"><input type="checkbox" checked={noDefault} onChange={(e) => setNoDefault(e.target.checked)} />NULL</label>
+              </div>
+            </div>
             {edit && type !== edit.type && <p className="hint">Values that don't fit the new type are cleared.</p>}
             <div className="modal__actions">
               {edit && <button type="button" className="btn btn--outline" onClick={() => pick(null)}>Cancel</button>}

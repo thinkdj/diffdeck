@@ -79,16 +79,14 @@ svg { flex: none; }
 /* list tools: search and sort on one row, the filter below, stretched to the pane */
 .tools { display: grid; gap: 8px; padding: 10px 10px 8px; border-bottom: 1px solid var(--line); }
 .tools__row { display: flex; gap: 8px; }
-.seg { display: inline-flex; max-width: 100%; overflow-x: auto; padding: 3px; gap: 2px; border-radius: 10px; background: var(--surface-sunk); }
-.seg label { position: relative; }
+.seg { display: flex; max-width: 100%; overflow-x: auto; padding: 3px; gap: 2px; border-radius: 10px; background: var(--surface-sunk); }
+.seg label { position: relative; flex: 1; min-width: 0; } /* options share the full width */
 .seg input { position: absolute; inset: 0; margin: 0; opacity: 0; cursor: pointer; }
-.seg span { display: inline-flex; align-items: center; gap: 7px; height: 32px; padding: 0 12px; border-radius: 8px; font: 600 13.5px/1 var(--sans); color: var(--ink-muted); }
+.seg span { display: flex; align-items: center; justify-content: center; gap: 7px; height: 32px; padding: 0 12px; border-radius: 8px; font: 600 13.5px/1 var(--sans); color: var(--ink-muted); }
 .seg small { font: 500 12px var(--mono); }
 .seg input:checked + span { background: var(--surface); color: var(--ink); box-shadow: var(--shadow); }
 .seg input:focus-visible + span { outline: 2px solid var(--focus); outline-offset: 1px; }
-.tools .seg { display: flex; }
-.tools .seg label { flex: 1; min-width: 0; }
-.tools .seg span { display: flex; justify-content: center; gap: 5px; height: 28px; padding: 0 6px; font-size: 13px; }
+.tools .seg span { gap: 5px; height: 28px; padding: 0 6px; font-size: 13px; }
 .search { flex: 1; min-width: 0; display: flex; align-items: center; gap: 8px; height: 36px; padding: 0 8px 0 10px; border: 1.5px solid var(--line-strong); border-radius: var(--r-sm); background: var(--surface); color: var(--ink-muted); cursor: text; }
 .search:focus-within { border-color: var(--ink); box-shadow: 0 0 0 3px var(--sprout-soft); }
 .search input { flex: 1; min-width: 0; border: 0; outline: none; background: none; color: var(--ink); font: 400 14px var(--sans); }
@@ -115,15 +113,30 @@ mark { padding: 0 1px; border-radius: 3px; background: var(--sun-soft); color: i
 
 /* the tree: one row per repo, nested repos indented under their parent behind a fold arrow */
 .tree, .tree__kids { list-style: none; padding: 0; display: grid; gap: 1px; }
-.tree__kids { margin: 1px 0 3px 23px; padding-left: 4px; border-left: 1px solid var(--line); }
+/* Guide lines like a file manager: a rail down from the parent's status dot, an elbow into each nested repo.
+   14px = the row's left padding (6) + half the dot's hover area (8.5); 17px = the middle of a row's first line. */
+.tree__kids { margin: 0 0 4px 14px; padding-left: 12px; }
+.tree__kids > li { position: relative; }
+.tree__kids > li::before { content: ""; position: absolute; top: 0; bottom: 0; left: -12px; border-left: 1.5px solid var(--line-strong); }
+.tree__kids > li:last-child::before { bottom: auto; height: 17px; }
+.tree__kids > li::after { content: ""; position: absolute; top: 17px; left: -12px; width: 10px; border-top: 1.5px solid var(--line-strong); }
+.tree__kids .row { padding-left: 2px; }
+.tree__kids .row__name { font-weight: 500; }
+.row__kind { color: var(--ink-muted); }
+/* the fold toggle: nested-repo count at the end of the parent's second line (row padding 7 + first line 20 + gap 1) */
+/* line 3: the fold toggle first, then tags; hidden when it has neither */
+.row__body { flex: 1; min-width: 0; display: grid; }
+.row { user-select: none; } /* a double-click folds, it shouldn't select words */
+.row__foot { display: flex; align-items: center; gap: 6px; min-width: 0; margin-top: 4px; cursor: pointer; }
+.row__foot:empty { display: none; }
+.row__fold { flex: none; display: inline-flex; align-items: center; gap: 3px; height: 20px; padding: 0 4px 0 6px; border: 1px solid var(--line-strong); border-radius: var(--r-pill); background: var(--surface); font: 600 11px/1 var(--mono); color: var(--ink); cursor: pointer; }
+.row__fold:hover { border-color: var(--ink); }
+.row__fold[aria-expanded="false"] { background: var(--ink); border-color: var(--ink); color: var(--surface); } /* folded: hidden repos stand out */
 .row { display: flex; align-items: flex-start; gap: 6px; padding: 7px 10px 7px 6px; border-radius: var(--r-sm); }
 .row:hover { background: var(--surface-sunk); }
 .row.is-open { background: var(--sprout-soft); }
-.row__chev { flex: none; display: grid; place-items: center; width: 18px; height: 20px; padding: 0; border: 0; border-radius: 4px; background: none; color: var(--ink-muted); cursor: pointer; }
-.row__chev:disabled { cursor: default; }
-.row__chev:not(:disabled):hover { background: var(--line); color: var(--ink); }
 .row > .tip { margin-top: 2px; }
-.row__hit { flex: 1; min-width: 0; display: grid; gap: 1px; padding: 0; border: 0; background: none; color: inherit; font: inherit; text-align: left; cursor: pointer; }
+.row__hit { min-width: 0; display: grid; gap: 1px; padding: 0; border: 0; background: none; color: inherit; font: inherit; text-align: left; cursor: pointer; }
 .row__top { display: flex; align-items: center; gap: 8px; min-width: 0; }
 .row__name { flex: 1; min-width: 0; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; font: 600 14px/20px var(--sans); }
 .row__top .pills { flex: none; flex-wrap: nowrap; gap: 4px; }
@@ -134,8 +147,8 @@ mark { padding: 0 1px; border-radius: 3px; background: var(--sun-soft); color: i
 .row__branch { flex: 0 1 auto; max-width: 55%; }
 .row__subject { flex: 1 1 0; font-family: var(--sans); }
 .row__subject::before { content: "· "; }
-.row .tags { flex-wrap: nowrap; overflow: hidden; margin-top: 4px; }
-.row .tag { flex: none; }
+.row .tags { flex-wrap: nowrap; min-width: 0; overflow: hidden; }
+.row .tag { flex: 0 1 auto; min-width: 46px; } /* every tag stays in view: long ones shrink first and end in … */
 .none { padding: 40px 16px; text-align: center; color: var(--ink-muted); }
 
 /* status dot: always paired with a tooltip saying what it means */
@@ -226,7 +239,7 @@ button.crumb:hover { color: var(--sprout-ink); text-decoration: underline; text-
 /* metadata (src/Meta.jsx): your own fields, as tags in the list and inputs in the details pane */
 .tags { display: flex; flex-wrap: wrap; gap: 6px; }
 .tag { display: inline-flex; align-items: center; gap: 5px; max-width: 100%; height: 22px; padding: 0 8px; border: 1px solid var(--line); border-radius: var(--r-sm); font: 500 12px/1 var(--sans); color: var(--ink-muted); white-space: nowrap; }
-.tag b { min-width: 0; overflow: hidden; text-overflow: ellipsis; font-weight: 600; color: var(--ink); }
+.tag b { min-width: 0; overflow: hidden; text-overflow: ellipsis; font-weight: 500; color: var(--ink); }
 .tag svg { color: var(--sprout-ink); }
 .field { width: 100%; height: 36px; padding: 0 10px; border: 1.5px solid var(--line); border-radius: var(--r-sm); background: var(--surface); color: var(--ink); font: 400 14px/20px var(--sans); outline: none; transition: border-color .12s, box-shadow .12s; }
 .field:hover { border-color: var(--line-strong); }
@@ -259,7 +272,13 @@ textarea.field { height: auto; min-height: 64px; padding: 7px 10px; resize: vert
 .fform > label, .fform__type { display: grid; gap: 6px; font: 600 13px/18px var(--sans); }
 .fform i { font-style: normal; font-weight: 400; color: var(--ink-muted); }
 .fform .seg { display: grid; grid-template-columns: repeat(auto-fit, minmax(112px, 1fr)); } /* 4 across, 2 by 2 on phones */
-.fform .seg span { justify-content: center; min-width: 0; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; } /* "Only some-long-repo-name" */
+.fform .seg span { min-width: 0; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; } /* "Only some-long-repo-name" */
+.fdefault { display: flex; align-items: center; gap: 12px; min-height: 36px; }
+.fdefault .field { flex: 1; }
+.fdefault .field:disabled, .fdefault .switch:disabled { opacity: .45; cursor: not-allowed; }
+.fnull { display: inline-flex; align-items: center; gap: 6px; flex: none; font: 600 12px/1 var(--mono); letter-spacing: .04em; color: var(--ink-muted); cursor: pointer; }
+.fnull input { width: 16px; height: 16px; margin: 0; accent-color: var(--sprout-ink); cursor: pointer; }
+.fdefault:has(.switch) .fnull { margin-left: auto; }
 .modal p.hint { font-size: 13px; color: var(--sun-ink); }
 .fform .modal__actions { margin-top: 0; }
 
@@ -307,4 +326,39 @@ textarea.field { height: auto; min-height: 64px; padding: 7px 10px; resize: vert
   .details__head h2 { font-size: 21px; line-height: 28px; }
   /* tapped tooltips sit along the bottom of the screen, so they never run off its edge */
   .tip__bubble, .row .tip__bubble { position: fixed; top: auto; right: 16px; bottom: 16px; left: 16px; width: auto; max-width: none; padding: 12px 14px; font-size: 13.5px; line-height: 20px; transform: none; }
+}
+/* small phones: rearrange rather than squeeze. Pills drop under the name, branch and commit take a line each,
+   filters go 2 by 2, the detail actions share the width with the remote on its own row. */
+@media (max-width: 420px) {
+  .app { padding: 0 8px; }
+  .split { gap: 8px; margin-bottom: 8px; }
+  .top { height: 50px; }
+  .logo { font-size: 18px; }
+  .notice { padding: 8px 12px; font-size: 14px; line-height: 22px; }
+  .tools { padding: 8px; }
+  .tools .seg { display: grid; grid-template-columns: 1fr 1fr; }
+  .mf { grid-template-columns: minmax(0, 1fr); gap: 2px; }
+  .mf .select { width: 100%; }
+  .side__list { padding: 4px; }
+  .row { padding: 8px 8px 8px 4px; }
+  .row__top { flex-wrap: wrap; row-gap: 3px; }
+  .row__ago { order: 1; }
+  .row__top .pills { order: 2; flex: 1 1 100%; flex-wrap: wrap; }
+  .row__sub { flex-wrap: wrap; row-gap: 0; }
+  .row__branch { max-width: none; flex: 1 1 0; }
+  .row__subject { flex: 1 1 100%; }
+  .row__subject::before { content: none; }
+  .tree__kids { margin-left: 12px; padding-left: 10px; } /* rail under the dot: row padding 4 + half the dot area 8.5 */
+  .tree__kids > li::before, .tree__kids > li::after { left: -10px; }
+  .tree__kids > li::after { width: 8px; }
+  .details { padding: 14px 12px 20px; gap: 14px; }
+  .details__head h2 { font-size: 19px; line-height: 26px; }
+  .details__head .actions { display: grid; grid-template-columns: 1fr 1fr; }
+  .details__head .actions .btn { justify-content: center; }
+  .actions__remote { grid-column: 1 / -1; margin-left: 0; }
+  .details__status { padding: 10px 12px; }
+  .files, .commits, .pkg { font-size: 12.5px; }
+  .commits code { display: none; } /* the subject matters more than the hash at this width */
+  .modal > div { padding: 18px 16px; }
+  .empty { padding: 32px 12px; }
 }
