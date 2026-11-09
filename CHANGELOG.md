@@ -2,7 +2,7 @@
 
 What changed in each release, in plain words. Newest first.
 
-## 1.1.0
+## 1.1.1
 
 The inbox release: a new two-pane layout, your own metadata and descriptions, and safety with repos you didn't make.
 
