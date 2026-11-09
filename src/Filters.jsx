@@ -6,6 +6,7 @@ import { ChevronDownIcon, FilterIcon, XIcon } from '@primer/octicons-react'
 import { fieldsFor } from '../server/meta.js'
 import { Scope } from './Meta.jsx'
 
+const OPEN = new URLSearchParams(location.search).has('filters') // ?filters starts with them unfolded (pnpm screenshot)
 export const id = (f) => `${f.repo ?? ''}|${f.key}`
 const day = (offset = 0) => new Date(Date.now() + offset * 86400_000).toLocaleDateString('sv') // YYYY-MM-DD, local
 const OPTIONS = {
@@ -41,7 +42,7 @@ export function MetaFilters({ fields, repos, value, onChange }) {
   const label = (f) => options(f, repos).find(([k]) => k === value[id(f)])?.[1] ?? value[id(f)].slice(1)
   return (
     <>
-      <details className="mfilt">
+      <details className="mfilt" open={OPEN}>
         <summary>
           <FilterIcon size={14} />Metadata{on.length > 0 && <b>{on.length}</b>}<ChevronDownIcon size={14} />
         </summary>

@@ -4,6 +4,8 @@
 
 Every local git repo you juggle, on one page: branch, uncommitted changes, unpushed commits, nested repos and your own metadata. Read-only: it never commits, fetches or writes to a repo.
 
+![diffdeck: the repo list on the left, with nested repos under their parent, and the open repo on the right with its uncommitted files, recent commits, scripts and dependencies](docs/screenshot.png)
+
 See it with sample repos: [live demo](https://thinkdj.github.io/diffdeck/)
 
 ```sh
@@ -76,6 +78,7 @@ A static copy with sample repos and metadata, for showing the UI without install
 
 ```sh
 pnpm dev:demo     # try it locally
+pnpm screenshot   # rebuild the demo, capture it with headless Chrome (set CHROME if it isn't found), save a 1600px optimized docs/screenshot.png
 pnpm build:demo   # static site in dist-demo/, relative paths, host it anywhere (GitHub Pages, Netlify, Cloudflare Pages)
 ```
 

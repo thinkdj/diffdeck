@@ -58,6 +58,7 @@ Notes for coding agents (and people) working on diffdeck. The README covers what
 
 ## Demo
 
+- `pnpm screenshot` (`scripts/screenshot.js`) builds the demo, serves it with Vite's `preview()` and saves `docs/screenshot.png` for the README with the Chrome, Edge or Chromium already installed. It captures at 2x, then `sharp` (dev only, never shipped) scales it to 1600px wide and writes a 256-colour palette PNG, about a third of the capture's size. Chrome runs async with its own temp profile, because a sync call blocks the preview server in the same process, and the script waits for the file because on Windows chrome.exe can return before it is written. The page opens a repo from `?open=<repo path>`, which the script uses. Rerun it after visible UI changes.
 - `vite --mode demo` swaps `api()` for `demoApi()` from `src/demo.js` (dynamically imported, so normal builds never include it). It builds to `dist-demo/` with relative paths for GitHub Pages (`.github/workflows/demo.yml`).
 - The sample data must be shaped exactly like `GET /api/repos`. **When the API shape changes, update `src/demo.js` too.** Times and dates are relative to now so the demo never ages. Metadata edits work in memory; adding or removing watched folders explains that it is a demo.
 

@@ -91,7 +91,7 @@ export default function App() {
   const [q, setQ] = useState('')
   const [mf, setMf] = useState({}) // metadata filters, see src/Filters.jsx
   const [showEmpty, setShowEmpty] = useState(false) // demo only: preview the page with nothing added yet
-  const [open, setOpen] = useState(null)
+  const [open, setOpen] = useState(() => new URLSearchParams(location.search).get('open')) // ?open=<repo path> opens a repo on load
   const [folded, setFolded] = useState(() => new Set()) // parents whose nested repos are hidden
   const [fieldsRepo, setFieldsRepo] = useState(null) // the repo whose fields dialog is open
   const searchRef = useRef(null)
