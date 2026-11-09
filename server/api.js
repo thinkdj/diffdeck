@@ -22,6 +22,17 @@ function load() {
 }
 const save = (cfg) => fs.writeFileSync(FILE, JSON.stringify(cfg, null, 2))
 
+// Scripts and dependencies from the repo's package.json, null when there is none or it doesn't parse. Only string values are kept.
+const strings = (o) => Object.fromEntries(Object.entries(o ?? {}).filter(([, v]) => typeof v === 'string'))
+function readPkg(dir) {
+  try {
+    const pkg = JSON.parse(fs.readFileSync(path.join(dir, 'package.json'), 'utf8'))
+    return { scripts: strings(pkg.scripts), dependencies: strings(pkg.dependencies), devDependencies: strings(pkg.devDependencies) }
+  } catch {
+    return null
+  }
+}
+
 const isRepo = (dir) => fs.existsSync(path.join(dir, '.git')) // dir or file (worktrees, submodules)
 
 const reposIn = (dir) => fs.readdirSync(dir, { withFileTypes: true })
@@ -49,7 +60,7 @@ async function list() {
     }
   })
   // ponytail: all repos at once, 3 git processes each; cap concurrency in git() if hundreds of repos get slow
-  const repos = await Promise.all([...found.values()].map(async (r) => withMeta(cfg, { ...r, ...(await status(r.path)) })))
+  const repos = await Promise.all([...found.values()].map(async (r) => withMeta(cfg, { ...r, pkg: readPkg(r.path), ...(await status(r.path)) })))
   return { roots, fields: cfg.fields ?? [], repos }
 }
 

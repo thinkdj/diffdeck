@@ -20,14 +20,17 @@ function repo(name, { parent, files: f = [], ...rest }) {
     branch: 'main', upstream: 'origin/main', ahead: 0, behind: 0, stash: 0,
     conflicts: f.filter((x) => x.code.includes('U')).length,
     hasRemote: true, web: `https://github.com/yourname/${parent ? `${parent}-` : ''}${name}`,
-    files: f, changed: f.length,
+    files: f, changed: f.length, pkg: null,
     ...rest,
   }
 }
 
+// package.json samples: { scripts, dependencies, devDependencies }. The api has enough of both to need "View all".
+const pkg = (scripts, dependencies = {}, devDependencies = {}) => ({ scripts, dependencies, devDependencies })
 const repos = [
   repo('invoice-app', {
     ahead: 2, stash: 1,
+    pkg: pkg({ dev: 'pnpm -r --parallel dev', build: 'pnpm -r build', test: 'pnpm -r test', lint: 'eslint .' }, {}, { eslint: '^9.30.0', prettier: '^3.6.0', typescript: '^5.9.0' }),
     files: files(' M package.json', ' M docker-compose.yml'),
     commits: commits(
       [2 * h, 'Point api and web at the new billing flow'],
@@ -39,6 +42,11 @@ const repos = [
   }),
   repo('api', {
     parent: 'invoice-app', branch: 'stripe-webhooks', upstream: 'origin/stripe-webhooks', ahead: 3, behind: 1,
+    pkg: pkg(
+      { 'db:migrate': 'prisma migrate deploy', 'db:seed': 'tsx scripts/seed.ts', 'db:studio': 'prisma studio', dev: 'tsx watch src/index.ts', build: 'tsc -p tsconfig.build.json', start: 'node dist/index.js', test: 'vitest run', 'test:watch': 'vitest', lint: 'eslint src', typecheck: 'tsc --noEmit', 'stripe:listen': 'stripe listen --forward-to localhost:3000/webhooks/stripe', 'docker:up': 'docker compose up -d' },
+      { fastify: '^5.4.0', '@fastify/cors': '^11.0.0', '@fastify/rate-limit': '^10.3.0', '@prisma/client': '^6.12.0', stripe: '^18.3.0', zod: '^4.0.0', pino: '^9.7.0', 'pino-pretty': '^13.0.0', nodemailer: '^7.0.0', dayjs: '^1.11.13', bullmq: '^5.56.0', ioredis: '^5.6.0' },
+      { prisma: '^6.12.0', tsx: '^4.20.0', typescript: '^5.9.0', vitest: '^3.2.0', '@types/node': '^24.0.0', '@types/nodemailer': '^6.4.17' },
+    ),
     files: files(' M src/billing/webhooks.ts', ' M src/billing/plans.ts', 'A  src/billing/refunds.ts', '?? src/billing/refunds.test.ts', ' M .env.example', ' D src/legacy/paypal.ts', 'R  src/mail/receipt.ts'),
     commits: commits(
       [25 * m, 'Handle failed payment webhooks'],
@@ -50,6 +58,7 @@ const repos = [
   }),
   repo('web', {
     parent: 'invoice-app',
+    pkg: pkg({ dev: 'next dev', build: 'next build', start: 'next start', lint: 'next lint' }, { next: '^15.4.0', react: '^19.1.0', 'react-dom': '^19.1.0', swr: '^2.3.0' }, { tailwindcss: '^4.1.0', typescript: '^5.9.0' }),
     commits: commits(
       [6 * h, 'Show plan limits on the billing page'],
       [1 * d, 'Fix invoice PDF download on Safari'],
@@ -59,6 +68,7 @@ const repos = [
     ),
   }),
   repo('landing-page', {
+    pkg: pkg({ dev: 'astro dev', build: 'astro build', preview: 'astro preview' }, { astro: '^5.12.0' }, { sharp: '^0.34.0' }),
     commits: commits(
       [4 * h, 'Pricing: the yearly plan is now two months free'],
       [2 * d, 'Add quotes from the first ten customers'],
@@ -69,6 +79,7 @@ const repos = [
   }),
   repo('mobile-app', {
     branch: 'release-1.4', upstream: 'origin/release-1.4', behind: 3,
+    pkg: pkg({ start: 'expo start', ios: 'expo run:ios', android: 'expo run:android', test: 'jest', 'build:ios': 'eas build -p ios', 'build:android': 'eas build -p android' }, { expo: '~53.0.0', react: '19.0.0', 'react-native': '0.79.5', 'expo-local-authentication': '~16.0.0', 'expo-secure-store': '~14.2.0', '@react-navigation/native': '^7.1.0' }, { jest: '^29.7.0', 'jest-expo': '~53.0.0' }),
     files: files(' M app/screens/Invoices.tsx', ' M app.json'),
     commits: commits(
       [1 * d, 'Bump version to 1.4.0'],
@@ -80,6 +91,7 @@ const repos = [
   }),
   repo('chrome-extension', {
     branch: 'export-csv', upstream: '',
+    pkg: pkg({ dev: 'vite', build: 'vite build', zip: 'node scripts/zip.js' }, {}, { vite: '^7.0.0', typescript: '^5.9.0', '@crxjs/vite-plugin': '^2.0.0' }),
     files: files('?? src/export/csv.ts'),
     commits: commits(
       [30 * m, 'Export the current table as CSV'],
@@ -93,6 +105,7 @@ const repos = [
   }),
   repo('support-bot', {
     behind: 1,
+    pkg: pkg({ start: 'node src/index.js', dev: 'node --watch src/index.js', test: 'node --test' }, { '@anthropic-ai/sdk': '^0.57.0', '@slack/bolt': '^4.4.0' }),
     files: files('UU src/reply.ts', 'UU package.json', ' M src/index.ts'),
     commits: commits(
       [2 * h, 'Answer billing questions from the help center'],
@@ -112,6 +125,7 @@ const repos = [
   }),
   repo('blog', {
     behind: 2, stash: 2,
+    pkg: pkg({ dev: 'eleventy --serve', build: 'eleventy' }, {}, { '@11ty/eleventy': '^3.1.0', '@11ty/eleventy-plugin-rss': '^2.0.0' }),
     commits: commits(
       [3 * d, 'Post: how I got my first 100 customers'],
       [9 * d, 'Post: pricing experiments that failed'],
