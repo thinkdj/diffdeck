@@ -1,7 +1,7 @@
 {
   "name": "diffdeck",
   "version": "0.1.0",
-  "description": "Every local git repo you juggle, on one page: branch, uncommitted changes, unpushed commits, nested repos. Read-only.",
+  "description": "The inbox for code you haven't shipped yet. Every local git repo you juggle, on one page: branch, uncommitted changes, unpushed commits, nested repos. Read-only.",
   "keywords": ["git", "repos", "dashboard", "status", "solo-founder", "cli", "local"],
   "license": "MIT",
   "author": "Deepak Thomas",

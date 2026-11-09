@@ -11,7 +11,7 @@ import {
 } from '@primer/octicons-react'
 
 const UNITS = [['y', 31536000], ['mo', 2592000], ['w', 604800], ['d', 86400], ['h', 3600], ['m', 60]]
-const ago = (t) => {
+export const ago = (t) => {
   const s = Date.now() / 1000 - t
   const u = UNITS.find(([, n]) => s >= n)
   return u ? Math.floor(s / u[1]) + u[0] : 'now'

@@ -5,6 +5,7 @@ What changed in each release, in plain words. Newest first.
 ## Unreleased
 
 - **Descriptions:** give each repo a description under its name, edited in place. `*bold*`, `_italic_` and links render; only http and https links are allowed. Search looks through descriptions too.
+- **Synced at and auto-refresh:** the top bar says when the list was last synced and how long ago (a few seconds ago, 1m ago, 1h ago). The list refreshes itself every 5 minutes while the tab is visible, as the Refresh button's tooltip says.
 - **New layout:** the page works like an inbox. The repos are a list on the left, with nested repos indented under their parent and foldable like folders, and the repo you pick opens on the right with its files, commits and metadata. Both sides scroll on their own, so nothing is wasted on empty card space. Up and down move through the list. Watched folders and the add bar fold away under the list. On phones you see one side at a time.
 - **Default values:** a metadata field can have a default that every repo without its own value shows. Leave NULL checked for none. Clearing a value in one repo keeps it empty instead of falling back.
 - **Metadata filters:** one filter per field under the status filter, Yes / No, a pick from the values in use, Overdue / Next 7 days / Later for dates, with the active ones as chips. Search now sticks to contents (names, branches, paths, commit subjects, file paths) and highlights matches.

@@ -47,6 +47,11 @@ svg { flex: none; }
 .logo img { width: 26px; height: 26px; }
 .notice { flex: none; margin-bottom: 12px; padding: 10px 16px; border-radius: var(--r-md); background: var(--beet-soft); }
 .notice--info { background: var(--sprout-soft); }
+.notice--demo { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 10px; }
+.notice--demo p { flex: 1 1 320px; }
+.promise { display: inline-flex; align-items: center; gap: 7px; height: 32px; padding: 0 14px 0 11px; border-radius: var(--r-pill); background: var(--sprout); color: var(--on-sprout); font: 700 13.5px/1 var(--sans); letter-spacing: -.005em; white-space: nowrap; cursor: help; }
+.logo__tag { margin-left: 6px; padding-left: 14px; border-left: 1px solid var(--line-strong); font: 400 14px/1 var(--sans); letter-spacing: 0; color: var(--ink-muted); }
+@media (max-width: 1100px) { .logo__tag { display: none; } }
 .notice code, .empty code { padding: 2px 8px; border-radius: 6px; background: var(--surface); color: var(--sprout-ink); font-size: 13px; font-weight: 500; white-space: nowrap; }
 .empty code { background: var(--surface); box-shadow: 0 0 0 1px var(--line); }
 .split { flex: 1; display: grid; grid-template-columns: clamp(320px, 30vw, 420px) minmax(0, 1fr); gap: 14px; min-height: 0; margin-bottom: 14px; }
@@ -161,6 +166,9 @@ mark { padding: 0 1px; border-radius: 3px; background: var(--sun-soft); color: i
 .tip { position: relative; z-index: 1; display: inline-flex; padding: 4px; border-radius: 50%; cursor: help; }
 .tip__bubble { position: absolute; top: calc(100% + 6px); left: 50%; z-index: 20; display: grid; gap: 2px; width: max-content; max-width: 280px; padding: 8px 11px; border-radius: var(--r-sm); background: var(--ink); color: var(--surface); box-shadow: var(--shadow); font: 500 12.5px/18px var(--sans); letter-spacing: 0; text-align: left; white-space: normal; transform: translateX(-50%); pointer-events: none; opacity: 0; visibility: hidden; transition: opacity .12s, visibility .12s; }
 .tip__bubble b { font-weight: 650; }
+/* every title="" as a styled bubble after a pause (TitleTips in src/Tip.jsx); a popover, so above dialogs too */
+.ttip { position: fixed; inset: auto; top: 0; left: 0; margin: 0; padding: 7px 10px; border: 0; border-radius: var(--r-sm); max-width: 300px; width: max-content; background: var(--ink); color: var(--surface); box-shadow: 0 6px 20px rgba(0, 0, 0, .18); font: 500 12.5px/18px var(--sans); white-space: normal; overflow-wrap: anywhere; pointer-events: none; animation: tip-in .12s ease-out; }
+@keyframes tip-in { from { opacity: 0; transform: translateY(-3px); } }
 .tip:hover, .tip:focus-visible { z-index: 3; }
 .tip:hover .tip__bubble, .tip:focus-visible .tip__bubble { opacity: 1; visibility: visible; }
 .row .tip__bubble { left: -4px; transform: none; } /* opens to the right, so the pane's edge never clips it */

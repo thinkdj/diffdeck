@@ -1,10 +1,11 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { ChevronDownIcon, EyeIcon, FileDiffIcon, FileDirectoryIcon, LockIcon, MoonIcon, PlusIcon, RepoIcon, SearchIcon, SunIcon, SyncIcon, XIcon } from '@primer/octicons-react'
-import { Details, Row, detached } from './Repo.jsx'
+import { ChevronDownIcon, DeviceDesktopIcon, EyeIcon, ShieldCheckIcon, FileDiffIcon, FileDirectoryIcon, LockIcon, MoonIcon, PlusIcon, RepoIcon, SearchIcon, SunIcon, SyncIcon, XIcon } from '@primer/octicons-react'
+import { Details, Row, ago, detached } from './Repo.jsx'
 import { useConfirm } from './Confirm.jsx'
 import { FieldsDialog } from './Meta.jsx'
 import { MetaFilters, metaHit } from './Filters.jsx'
 import { Seg } from './Seg.jsx'
+import { TitleTips } from './Tip.jsx'
 
 // The hosted demo (vite --mode demo) answers from sample data; normal builds never include it.
 const DEMO = import.meta.env.MODE === 'demo'
@@ -46,6 +47,19 @@ function ThemeToggle() {
       {theme === 'light' ? <MoonIcon size={18} /> : <SunIcon size={18} />}
     </button>
   )
+}
+
+const AUTO = 5 // minutes between automatic refreshes, while the tab is visible
+
+// "Synced at 9:38 PM (a few seconds ago)", then (1m ago), (1h ago): the same short ages as the list. Ticks every 10s.
+function Synced({ at }) {
+  const [, tick] = useState(0)
+  useEffect(() => {
+    const t = setInterval(() => tick((n) => n + 1), 10_000)
+    return () => clearInterval(t)
+  }, [])
+  const age = ago(at / 1000)
+  return <span className="muted" title={at.toLocaleString()}>Synced at {at.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} ({age === 'now' ? 'a few seconds ago' : `${age} ago`})</span>
 }
 
 // Path input plus Browse. Focused in the empty state, tucked under the list once there are folders.
@@ -110,9 +124,11 @@ export default function App() {
 
   useEffect(() => {
     refresh()
-    // Keys outside inputs and dialogs: / searches, up and down move through the list.
+    // Keys outside inputs and dialogs: / searches, up and down move through the list. In search, up and down work too,
+    // so you can type a few letters and walk the matches.
     const onKey = (e) => {
-      if (/INPUT|TEXTAREA|SELECT/.test(document.activeElement?.tagName) || document.querySelector('dialog[open]')) return
+      const inSearch = document.activeElement === searchRef.current && /^Arrow(Up|Down)$/.test(e.key)
+      if ((!inSearch && /INPUT|TEXTAREA|SELECT/.test(document.activeElement?.tagName)) || document.querySelector('dialog[open]')) return
       if (e.key === '/') {
         e.preventDefault()
         searchRef.current?.focus()
@@ -127,7 +143,9 @@ export default function App() {
     }
     addEventListener('focus', refresh) // back from the editor or terminal: fresh numbers
     addEventListener('keydown', onKey)
+    const auto = setInterval(() => !document.hidden && refresh(), AUTO * 60_000) // a hidden tab catches up on focus instead
     return () => {
+      clearInterval(auto)
       removeEventListener('focus', refresh)
       removeEventListener('keydown', onKey)
     }
@@ -175,10 +193,10 @@ export default function App() {
   return (
     <div className="app">
       <header className="top">
-        <a className="logo" href="./"><img src={import.meta.env.BASE_URL + 'icon.svg'} alt="" />diffdeck</a>
+        <a className="logo" href="./"><img src={import.meta.env.BASE_URL + 'icon.svg'} alt="" />diffdeck<span className="logo__tag">The inbox for code you haven't shipped yet</span></a>
         <div className="top__right">
-          {checked && <span className="muted">Checked {checked.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>}
-          <button className="btn btn--outline" onClick={refresh} disabled={busy} title="Refresh">
+          {checked && <Synced at={checked} />}
+          <button className="btn btn--outline" onClick={refresh} disabled={busy} title={`Refresh now. Auto-refreshes every ${AUTO} minutes, and when you come back to this tab.`}>
             <SyncIcon size={16} className={busy ? 'spin' : ''} /><span>{busy ? 'Checking' : 'Refresh'}</span>
           </button>
           <ThemeToggle />
@@ -190,7 +208,13 @@ export default function App() {
         </div>
       </header>
 
-      {DEMO && <p className="notice notice--info">You are looking at sample repos. Run <code>npx diffdeck</code> on your computer to see your own.</p>}
+      {DEMO && (
+        <div className="notice notice--info notice--demo">
+          <p>You are looking at sample repos. Run <code>npx diffdeck</code> on your computer to see your own.</p>
+          <span className="promise" title="diffdeck only reads: it never commits, fetches, checks out or writes to a repo"><ShieldCheckIcon size={16} />Read-only</span>
+          <span className="promise" title="It runs on your computer and talks only to it. Your list and metadata live in ~/.diffdeck.json"><DeviceDesktopIcon size={16} />Nothing leaves your machine</span>
+        </div>
+      )}
       {error && <p className="notice" role="alert">{error}</p>}
 
       <div className={`split${selected ? ' has-open' : ''}${data && !roots.length ? ' split--bare' : ''}`}>
@@ -273,6 +297,7 @@ export default function App() {
       </div>
       {fieldsRepo && <FieldsDialog repo={fieldsRepo} fields={fields} busy={busy} error={error} post={post} remove={del} onClose={() => setFieldsRepo(null)} />}
       {confirmUI}
+      <TitleTips />
     </div>
   )
 }

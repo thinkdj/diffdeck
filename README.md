@@ -1,5 +1,7 @@
 # diffdeck
 
+**The inbox for code you haven't shipped yet.**
+
 Every local git repo you juggle, on one page: branch, uncommitted changes, unpushed commits, nested repos and your own metadata. Read-only: it never commits, fetches or writes to a repo.
 
 See it with sample repos: [live demo](https://thinkdj.github.io/diffdeck/)
