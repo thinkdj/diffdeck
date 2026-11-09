@@ -11,8 +11,9 @@ import { useConfirm } from './Confirm.jsx'
 
 const ICON = { boolean: CheckboxIcon, string: TypographyIcon, text: NoteIcon, date: CalendarIcon }
 const LIMIT = { string: 200, text: 10_000 } // same limits server/meta.js checks
-// Only local fields are tagged: global is the default, so it needs no label.
-export const Scope = ({ f }) => f.repo && <span className="scope" title="Only this repo has this field">Local</span>
+// Only local fields are tagged: global is the default, so it needs no label. The tooltip names the repo, because the
+// metadata filters list every repo's local fields side by side.
+export const Scope = ({ f }) => f.repo && <span className="scope" title={`Only ${f.repo.split(/[\\/]/).pop()} has this field`}>Local</span>
 const day = (v) => new Date(v + 'T00:00').toLocaleDateString([], { day: 'numeric', month: 'short', year: 'numeric' }) // T00:00: local, not UTC
 
 // In the list: one quiet tag per filled field, compact so they share one line. Yes / No shows its name, short text and

@@ -41,7 +41,7 @@ export function About({ r, q, onSave }) {
     )
   }
   return (
-    <div className="about" onClick={(e) => !e.target.closest('a') && setEditing(true)}>
+    <div className="about" onClick={(e) => !e.target.closest('a') && !String(getSelection()) && setEditing(true)}>{/* selecting text to copy isn't a click to edit */}
       <p className={saved ? '' : 'muted'}>
         {saved ? render(inline(saved), q) : 'Add a description'}
         <button className="ibtn" onClick={() => setEditing(true)} title="Edit description" aria-label="Edit description"><PencilIcon size={14} /></button>
