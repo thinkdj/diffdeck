@@ -1,17 +1,37 @@
 {
   "name": "diffdeck",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "description": "The inbox for code you haven't shipped yet. Every local git repo you juggle, on one page: branch, uncommitted changes, unpushed commits, nested repos. Read-only.",
-  "keywords": ["git", "repos", "dashboard", "status", "solo-founder", "cli", "local"],
+  "keywords": [
+    "git",
+    "repos",
+    "dashboard",
+    "status",
+    "solo-founder",
+    "cli",
+    "local"
+  ],
   "license": "MIT",
   "author": "Deepak Thomas",
-  "repository": { "type": "git", "url": "git+https://github.com/thinkdj/diffdeck.git" },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/thinkdj/diffdeck.git"
+  },
   "homepage": "https://github.com/thinkdj/diffdeck#readme",
   "bugs": "https://github.com/thinkdj/diffdeck/issues",
   "type": "module",
-  "bin": { "diffdeck": "bin/diffdeck.js" },
-  "files": ["bin", "dist", "server", "!server/*.test.js"],
-  "engines": { "node": ">=20" },
+  "bin": {
+    "diffdeck": "bin/diffdeck.js"
+  },
+  "files": [
+    "bin",
+    "dist",
+    "server",
+    "!server/*.test.js"
+  ],
+  "engines": {
+    "node": ">=20"
+  },
   "packageManager": "pnpm@10.15.1",
   "scripts": {
     "dev": "vite --open",
