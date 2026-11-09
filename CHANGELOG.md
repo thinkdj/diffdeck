@@ -4,6 +4,8 @@ What changed in each release, in plain words. Newest first.
 
 ## Unreleased
 
+- **Safer with repos you didn't make:** a repo's own git config can no longer make diffdeck run a program. Every git call switches off `core.fsmonitor`, `log.showSignature` and the repo's filter commands (Git LFS keeps working), and git no longer steps into submodules from the parent.
+- **Harder to poke from other websites:** the server refuses any request another site makes, reads included, and a malformed address no longer stops it.
 - **Descriptions:** give each repo a description under its name, edited in place. `*bold*`, `_italic_` and links render; only http and https links are allowed. Search looks through descriptions too.
 - **Synced at and auto-refresh:** the top bar says when the list was last synced and how long ago (a few seconds ago, 1m ago, 1h ago). The list refreshes itself every 5 minutes while the tab is visible, as the Refresh button's tooltip says.
 - **New layout:** the page works like an inbox. The repos are a list on the left, with nested repos indented under their parent and foldable like folders, and the repo you pick opens on the right with its files, commits and metadata. Both sides scroll on their own, so nothing is wasted on empty card space. Up and down move through the list. Watched folders and the add bar fold away under the list. On phones you see one side at a time.

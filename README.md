@@ -2,7 +2,7 @@
 
 **The inbox for code you haven't shipped yet.**
 
-Every local git repo you juggle, on one page: branch, uncommitted changes, unpushed commits, nested repos and your own metadata. Read-only: it never commits, fetches or writes to a repo.
+diffdeck lists the git repos on your computer and what is still waiting in each one: changes you haven't committed, commits you haven't pushed, branches that have fallen behind, stashes and conflicts. Point it at the folder where you keep your code and it finds the repos, including ones nested inside other repos. You can give each repo a short description and fields of your own, like the stack it uses or when to look at it again. It runs on your computer and only ever reads your repos.
 
 ![diffdeck: the repo list on the left, with nested repos under their parent, and the open repo on the right with its uncommitted files, recent commits, scripts and dependencies](docs/screenshot.png)
 
@@ -12,9 +12,18 @@ See it with sample repos: [live demo](https://thinkdj.github.io/diffdeck/)
 npx diffdeck
 ```
 
-That starts diffdeck on your machine at http://localhost:4747 and opens it. Run it again while it is open and it just brings the page back up. Options: `--port <n>`, `--no-open`.
+That starts diffdeck on your machine at http://localhost:4747 and opens it. Run it again while it is open and it just brings the page back up. Options: `--port <n>`, `--no-open`. Needs Node 20+ and `git` on your PATH, on Windows, macOS or Linux.
 
-The page is laid out like an inbox: the list of repos on the left, the one you picked on the right, with its description, uncommitted files, recent commits, package.json scripts and dependencies, and metadata. Click under a repo's name to give it a description: `*bold*`, `_italic_` and links work, and Enter saves. Move with the arrow keys, press `/` to search names, branches, commits and file paths (matches are highlighted), and filter by status or by your own metadata fields. Open **Watching** under the list to add a repo path or a folder that holds repos, or click Browse. Each path is checked one level down, and any repo found is checked one level down for nested repos, which sit indented under their parent in the list. Your list is stored in `~/.diffdeck.json`.
+## Using it
+
+- **Add your code.** Paste the path of a repo, or of a folder that holds repos, or click Browse. Later, more go in under **Watching**, below the list. Each path is checked one level down, and every repo found one level further for nested repos.
+- **The list** has a row per repo with its status, branch and last commit. Nested repos sit under their parent and fold like folders: click the count on the parent's third line, or double-click the row.
+- **The open repo** shows its description, uncommitted files, recent commits, the scripts and dependencies in its `package.json`, and its metadata.
+- **Find things.** Press `/` to search names, branches, paths, descriptions, commits and file paths. Matches are highlighted, and up and down move through the results. Filter by status (changes, unpushed, behind) or by your own fields.
+- **Descriptions** go under a repo's name: click to edit, Enter saves. `*bold*`, `_italic_` and links work.
+- **Fresh numbers.** The list refreshes when you come back to the tab and every 5 minutes, or when you click Refresh.
+
+Your list, descriptions and metadata are stored in `~/.diffdeck.json`, never in a repo.
 
 ## Metadata
 
@@ -48,13 +57,20 @@ Fields and values live in `~/.diffdeck.json`, keyed by repo path, never in the r
   "meta": {
     "/Users/sam/code/invoice-app": { "Uses Stripe": true },
     "/Users/sam/code/mobile-app": { "Uses Stripe": true, "App Store": true }
+  },
+  "about": {
+    "/Users/sam/code/invoice-app": "The *invoicing SaaS*: api and web in one workspace."
   }
 }
 ```
 
 A field with a `repo` is local to that repo. Renaming a field moves its values. Changing its type keeps only the values that still fit. Deleting a global field clears its value from every repo, a local one from its repo. A repo that moves to another folder starts with empty metadata.
 
-Needs Node 20+ and `git` on your PATH. Works on Windows, macOS and Linux.
+## Safety
+
+- **Read-only.** diffdeck runs `git status`, `git log` and `git remote`, and never commits, fetches, checks out or writes inside a repo.
+- **Safe with repos you didn't make.** A repo's own config can tell git to run programs, and a folder you watch might hold one you unzipped from someone else. diffdeck switches those settings off for every git call (`core.fsmonitor`, `log.showSignature` and filter commands, except Git LFS), so looking at a repo never runs its code.
+- **Local only.** The server listens on 127.0.0.1 and answers only to `localhost`. Other websites can't use it: browsers say where a request comes from, and diffdeck refuses any that isn't its own page.
 
 ## Develop
 
@@ -66,11 +82,12 @@ pnpm test
 ```
 
 - `bin/diffdeck.js`: the `npx diffdeck` command. Serves `dist/` and the API on 127.0.0.1, answers only to localhost
-- `server/git.js`: the only code that runs git (`execFile`, no shell, `--no-optional-locks`)
+- `server/git.js`: the only code that runs git (`execFile`, no shell, `--no-optional-locks`, and a repo's own commands switched off)
 - `server/api.js`: `/api` routes and the saved list
 - `server/meta.js`: metadata fields and values, pure functions shared by the API and the demo
 - `server/pickFolder.js`: the OS folder dialog behind Browse (PowerShell on Windows, osascript on macOS, zenity on Linux)
-- `src/`: the page (React). `src/Meta.jsx` is the metadata UI, `src/demo.js` holds the sample repos and metadata for the demo
+- `src/`: the page (React). `src/Meta.jsx` is the metadata UI, `src/inline.js` the little markdown for descriptions, `src/demo.js` the sample repos for the demo
+- `scripts/screenshot.js`: `pnpm screenshot`, which makes `docs/screenshot.png`
 
 ## Demo
 
