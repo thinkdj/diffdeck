@@ -86,6 +86,8 @@ async function readJson(req) {
 }
 
 // Every route answers with the fresh list, so the page never needs a second round trip.
+// Checks run before any route, in this order: where the request comes from (Sec-Fetch-Site), the Origin of writes,
+// and JSON for POSTs. The CLI (bin/diffdeck.js) has already refused any Host that isn't localhost.
 export default async function api(req, res) {
   const send = (code, body) => {
     res.statusCode = code
@@ -94,6 +96,11 @@ export default async function api(req, res) {
   }
   try {
     const { pathname, searchParams } = new URL(req.url, 'http://localhost')
+    // Browsers say where a request comes from. Anything but our own page (same-origin) or a typed address (none) is
+    // refused, reads too: another site can't make diffdeck run git for every repo in a loop. Other localhost ports
+    // count as same-site, so they are refused as well. No header means a script, such as a second `npx diffdeck`.
+    const site = req.headers['sec-fetch-site']
+    if (site && site !== 'same-origin' && site !== 'none') return send(403, { error: 'Not allowed.' })
     // Writes come only from our own page: a foreign Origin is refused, and POSTs must be JSON,
     // which another website can't send without a CORS preflight that nothing here answers.
     if (req.method !== 'GET' && req.headers.origin && new URL(req.headers.origin).host !== req.headers.host) return send(403, { error: 'Not allowed.' })

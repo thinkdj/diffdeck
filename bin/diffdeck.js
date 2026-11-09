@@ -35,11 +35,17 @@ const server = http.createServer((req, res) => {
     req.url = req.url.slice(4)
     return api(req, res)
   }
-  // Static files from dist/, anything unknown (or outside dist/) gets the page.
-  const file = path.join(DIST, decodeURIComponent(new URL(req.url, 'http://localhost').pathname))
+  // Static files from dist/, anything unknown (or outside dist/) gets the page. A URL that doesn't decode is a 400:
+  // throwing here would take the whole server down, and any website can send one.
+  let file
+  try {
+    file = path.join(DIST, decodeURIComponent(new URL(req.url, 'http://localhost').pathname))
+  } catch {
+    return res.writeHead(400).end()
+  }
   const serve = file.startsWith(DIST) && fs.statSync(file, { throwIfNoEntry: false })?.isFile() ? file : path.join(DIST, 'index.html')
-  res.writeHead(200, { 'content-type': TYPES[path.extname(serve)] ?? 'application/octet-stream' })
-  fs.createReadStream(serve).pipe(res)
+  res.writeHead(200, { 'content-type': TYPES[path.extname(serve)] ?? 'application/octet-stream', 'x-content-type-options': 'nosniff' })
+  fs.createReadStream(serve).on('error', () => res.destroy()).pipe(res)
 })
 
 server.on('error', async (e) => {
