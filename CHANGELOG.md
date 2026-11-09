@@ -2,6 +2,18 @@
 
 What changed in each release, in plain words. Newest first.
 
+## Unreleased
+
+- **Rows open from anywhere:** a click on a row's padding or tags opens the repo, not only a click on its text.
+- **Esc in search** clears the search, then leaves the box. It no longer closes the open repo.
+- **No dead ends:** "No repos match" comes with **Clear search and filters**, and the first load says it is checking your repos instead of showing an empty pane.
+- **Opening a repo starts at its title.** On phones the list is back where you left it when you close the repo.
+- **Plain words:** hovering an uncommitted file says Modified, Added, Deleted, Renamed, New or Conflict instead of git's two-letter code, and a file both sides added or deleted now shows as a conflict. If diffdeck stops running, the page says so and how to start it again.
+- **Behind, honestly:** the behind pill's tooltip says the number is as of your last fetch, since diffdeck never fetches.
+- **Watched folders:** the bar under the list says **Add or remove**, and each folder shows its count as "10 repos".
+- **Two by two:** uncommitted files and recent commits share a row, scripts and dependencies the next, however wide the screen.
+- **Small touches:** selecting text in a description no longer starts an edit, a Local tag's tooltip names its repo, the plain pills stand out on the status band, a commit's full subject shows on hover, and the smallest buttons are taller on touch screens.
+
 ## 1.1.1
 
 The inbox release: a new two-pane layout, your own metadata and descriptions, and safety with repos you didn't make.
