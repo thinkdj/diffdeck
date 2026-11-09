@@ -1,9 +1,10 @@
 // JSON API at /api: mounted by bin/diffdeck.js (npx diffdeck) and by vite.config.js (pnpm dev).
-// The only state is the list of folders you added.
+// The only state is ~/.diffdeck.json: the folders you added, plus your metadata fields and values (server/meta.js).
 import fs from 'node:fs'
 import os from 'node:os'
 import path from 'node:path'
 import { status } from './git.js'
+import { removeField, saveField, setValue, withMeta } from './meta.js'
 import { pickFolder } from './pickFolder.js'
 
 // Rarely used by other dev tools, and fixed so the page keeps its origin (the saved theme lives per origin).
@@ -36,8 +37,9 @@ function discover(root) {
 }
 
 async function list() {
+  const cfg = load()
   const found = new Map()
-  const roots = load().roots.map((root) => {
+  const roots = cfg.roots.map((root) => {
     try {
       const repos = discover(root)
       for (const r of repos) if (!found.has(r.path)) found.set(r.path, { ...r, name: path.basename(r.path) })
@@ -47,8 +49,8 @@ async function list() {
     }
   })
   // ponytail: all repos at once, 3 git processes each; cap concurrency in git() if hundreds of repos get slow
-  const repos = await Promise.all([...found.values()].map(async (r) => ({ ...r, ...(await status(r.path)) })))
-  return { roots, repos }
+  const repos = await Promise.all([...found.values()].map(async (r) => withMeta(cfg, { ...r, ...(await status(r.path)) })))
+  return { roots, fields: cfg.fields ?? [], repos }
 }
 
 function addRoot(input) {
@@ -98,6 +100,21 @@ export default async function api(req, res) {
     }
     if (pathname === '/roots' && req.method === 'DELETE') {
       removeRoot(searchParams.get('path'))
+      return send(200, await list())
+    }
+    // Metadata. POST /fields { was?, key, desc, type, repo? } adds or edits a field (repo: local to that repo),
+    // DELETE /fields?key=&repo= removes it,
+    // POST /meta { path, key, value } sets one repo's value. Only ~/.diffdeck.json changes, never a repo.
+    if (pathname === '/fields' && req.method === 'POST') {
+      save(saveField(load(), await readJson(req)))
+      return send(200, await list())
+    }
+    if (pathname === '/fields' && req.method === 'DELETE') {
+      save(removeField(load(), searchParams.get('key'), searchParams.get('repo')))
+      return send(200, await list())
+    }
+    if (pathname === '/meta' && req.method === 'POST') {
+      save(setValue(load(), await readJson(req)))
       return send(200, await list())
     }
     send(404, { error: 'Not found' })
