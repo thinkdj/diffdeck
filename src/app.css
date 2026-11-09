@@ -116,7 +116,7 @@ mark { padding: 0 1px; border-radius: 3px; background: var(--sun-soft); color: i
 .chip b { font-weight: 600; }
 .chip:hover { background: var(--beet-soft); color: var(--beet); }
 
-/* the tree: one row per repo, nested repos indented under their parent behind a fold arrow */
+/* the tree: one row per repo, nested repos indented under their parent */
 .tree, .tree__kids { list-style: none; padding: 0; display: grid; gap: 1px; }
 /* Guide lines like a file manager: a rail down from the parent's status dot, an elbow into each nested repo.
    14px = the row's left padding (6) + half the dot's hover area (8.5); 17px = the middle of a row's first line. */
@@ -128,11 +128,10 @@ mark { padding: 0 1px; border-radius: 3px; background: var(--sun-soft); color: i
 .tree__kids .row { padding-left: 2px; }
 .tree__kids .row__name { font-weight: 500; }
 .row__kind { color: var(--ink-muted); }
-/* the fold toggle: nested-repo count at the end of the parent's second line (row padding 7 + first line 20 + gap 1) */
 /* line 3: the fold toggle first, then tags; hidden when it has neither */
 .row__body { flex: 1; min-width: 0; display: grid; }
-.row { user-select: none; } /* a double-click folds, it shouldn't select words */
-.row__foot { display: flex; align-items: center; gap: 6px; min-width: 0; margin-top: 4px; cursor: pointer; }
+.row { user-select: none; cursor: pointer; } /* the whole row opens the repo; a double-click folds, it shouldn't select words */
+.row__foot { display: flex; align-items: center; gap: 6px; min-width: 0; margin-top: 4px; }
 .row__foot:empty { display: none; }
 .row__fold { flex: none; display: inline-flex; align-items: center; gap: 3px; height: 20px; padding: 0 4px 0 6px; border: 1px solid var(--line-strong); border-radius: var(--r-pill); background: var(--surface); font: 600 11px/1 var(--mono); color: var(--ink); cursor: pointer; }
 .row__fold:hover { border-color: var(--ink); }
@@ -154,7 +153,8 @@ mark { padding: 0 1px; border-radius: 3px; background: var(--sun-soft); color: i
 .row__subject::before { content: "· "; }
 .row .tags { flex-wrap: nowrap; min-width: 0; overflow: hidden; }
 .row .tag { flex: 0 1 auto; min-width: 46px; } /* every tag stays in view: long ones shrink first and end in … */
-.none { padding: 40px 16px; text-align: center; color: var(--ink-muted); }
+.none { display: grid; justify-items: center; gap: 6px; padding: 40px 16px; text-align: center; color: var(--ink-muted); }
+.none .more { justify-self: center; }
 
 /* status dot: always paired with a tooltip saying what it means */
 .dot { display: block; width: 9px; height: 9px; border-radius: 50%; }
@@ -209,7 +209,10 @@ button.crumb:hover { color: var(--sprout-ink); text-decoration: underline; text-
 .about--edit small { font-size: 12px; line-height: 16px; }
 .details__head code { display: block; font-size: 13px; color: var(--ink-muted); overflow-wrap: anywhere; }
 .details__status { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 20px; padding: 12px 16px; border-radius: var(--r-md); background: var(--surface-sunk); }
-.details__cols { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(300px, 100%), 1fr)); gap: 20px 40px; }
+.details__status .pill--plain { background: var(--surface); } /* a plain pill is the band's own colour: lift it, so it still reads as a pill */
+/* 2 by 2: uncommitted and commits, then scripts and dependencies. A column is at least half the pane (less half the
+   40px gap), so there are never three across, and at least 300px, so a narrow pane stacks them. */
+.details__cols { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, max(300px, calc(50% - 20px))), 1fr)); gap: 20px 40px; }
 .details section { display: grid; align-content: start; gap: 10px; min-width: 0; }
 .error { color: var(--beet); font: 13.5px/22px var(--mono); white-space: pre-wrap; overflow-wrap: anywhere; }
 .files, .commits { list-style: none; padding: 0; display: grid; gap: 4px; font: 400 13.5px/22px var(--mono); }
@@ -241,7 +244,6 @@ button.crumb:hover { color: var(--sprout-ink); text-decoration: underline; text-
 .empty__tips li { display: grid; gap: 4px; padding: 14px 16px; border-radius: var(--r-md); background: var(--surface-sunk); }
 .empty__tips li b { display: block; color: var(--ink); }
 .empty__tips li svg { color: var(--sprout-ink); margin-bottom: 4px; }
-.skeleton { height: 160px; }
 
 /* confirm modal (src/Confirm.jsx) */
 .modal { width: min(440px, calc(100vw - 32px)); padding: 0; border: 0; border-radius: var(--r-md); background: var(--surface); color: var(--ink); box-shadow: 0 20px 60px rgba(0, 0, 0, .25); }
@@ -310,7 +312,8 @@ textarea.field { height: auto; min-height: 64px; padding: 7px 10px; resize: vert
 .watch summary { display: flex; align-items: center; gap: 8px; padding: 9px 14px; font: 600 12.5px/18px var(--sans); color: var(--ink-muted); list-style: none; cursor: pointer; user-select: none; }
 .watch summary::-webkit-details-marker { display: none; }
 .watch summary:hover { color: var(--ink); }
-.watch summary svg:last-child { margin-left: auto; transition: transform .12s; }
+.watch summary small { min-width: 0; margin-left: auto; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; font: 400 12.5px/18px var(--sans); } /* says what unfolding is for; pushes itself and the arrow right */
+.watch summary svg:last-child { transition: transform .12s; }
 .watch[open] summary svg:last-child { transform: rotate(180deg); }
 .watch__body { display: grid; gap: 10px; padding: 0 10px 10px; }
 .watch .addbar .btn--outline span { display: none; } /* Browse goes icon-only in the narrow pane */
@@ -323,10 +326,18 @@ textarea.field { height: auto; min-height: 64px; padding: 7px 10px; resize: vert
 .roots { display: flex; flex-wrap: wrap; gap: 6px; }
 .root { display: inline-flex; align-items: center; gap: 8px; max-width: 100%; height: 28px; padding: 0 4px 0 10px; border: 1px solid var(--line); border-radius: var(--r-pill); font: 400 12.5px var(--mono); color: var(--ink-muted); }
 .root code { min-width: 0; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; color: var(--ink); }
-.root small { font: inherit; }
+.root small { flex: none; font: inherit; white-space: nowrap; }
 .root small.bad { color: var(--beet); }
 .root button { display: grid; place-items: center; width: 22px; height: 22px; padding: 0; border: 0; border-radius: 50%; background: none; color: var(--ink-muted); cursor: pointer; }
 .root button:hover { background: var(--beet-soft); color: var(--beet); }
+
+/* fingers: the smallest controls get a taller target, so a tap on the fold count doesn't open the repo instead */
+@media (pointer: coarse) {
+  .row__fold { height: 28px; padding: 0 8px 0 10px; }
+  .chip { height: 30px; }
+  .root { height: 34px; }
+  .root button { width: 28px; height: 28px; }
+}
 
 /* tablet and phone: one pane at a time, the page scrolls as a whole. Opening a repo shows it, the X goes back to the list. */
 @media (max-width: 860px) {
