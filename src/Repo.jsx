@@ -1,11 +1,12 @@
-// One repo: its status pills, its card (with any nested repos inside), and the details panel that opens below.
+// One repo: its status pills, its row in the list, and the details pane.
 import { useEffect, useState } from 'react'
 import { Tip } from './Tip.jsx'
 import { MetaSection, Tags } from './Meta.jsx'
+import { PkgSection, depRow, depsOf, scriptRow, scriptsOf } from './Pkg.jsx'
 import {
-  AlertIcon, ArchiveIcon, ArrowDownIcon, ArrowUpIcon, CheckIcon, CloudOfflineIcon, CodeIcon, CopyIcon,
-  DiffAddedIcon, DiffModifiedIcon, DiffRemovedIcon, DiffRenamedIcon, FileDiffIcon, FileSubmoduleIcon, GitBranchIcon,
-  GitCommitIcon, LinkExternalIcon, MarkGithubIcon, RepoIcon, RepoPushIcon, XCircleIcon, XIcon,
+  AlertIcon, ArchiveIcon, ArrowDownIcon, ArrowUpIcon, CheckIcon, ChevronDownIcon, ChevronRightIcon, CloudOfflineIcon, CodeIcon,
+  CopyIcon, DiffAddedIcon, DiffModifiedIcon, DiffRemovedIcon, DiffRenamedIcon, FileDiffIcon, GitBranchIcon, GitCommitIcon,
+  LinkExternalIcon, MarkGithubIcon, RepoPushIcon, XCircleIcon, XIcon,
 } from '@primer/octicons-react'
 
 const UNITS = [['y', 31536000], ['mo', 2592000], ['w', 604800], ['d', 86400], ['h', 3600], ['m', 60]]
@@ -14,8 +15,13 @@ const ago = (t) => {
   const u = UNITS.find(([, n]) => s >= n)
   return u ? Math.floor(s / u[1]) + u[0] : 'now'
 }
-const agoLong = (t) => (ago(t) === 'now' ? 'just now' : `${ago(t)} ago`)
 const when = (t) => new Date(t * 1000).toLocaleString()
+// Wraps every match of the search term in <mark>. q is already lower-cased and trimmed.
+export function Hi({ text, q }) {
+  const i = q && text ? text.toLowerCase().indexOf(q) : -1
+  if (i < 0) return text
+  return <>{text.slice(0, i)}<mark>{text.slice(i, i + q.length)}</mark><Hi text={text.slice(i + q.length)} q={q} /></>
+}
 const baseName = (p) => p.split(/[\\/]/).pop()
 export const detached = (r) => r.branch === '(detached)'
 const branchOf = (r) => (detached(r) ? `detached at ${r.commits?.[0]?.hash ?? '?'}` : r.branch || '–')
@@ -61,108 +67,81 @@ const Pills = ({ r, compact }) => (
   </span>
 )
 
-// Open in editor, open remote, copy path. Icon-only on cards, labelled in the details panel.
-function Actions({ r, labels }) {
+// Copy path and open in the editor on the left, the remote on the right.
+function Actions({ r }) {
   const [copied, setCopied] = useState(false)
   const copy = () => navigator.clipboard.writeText(r.path).then(() => {
     setCopied(true)
     setTimeout(() => setCopied(false), 1500)
   })
-  const cls = (primary) => (labels ? `btn ${primary ? 'btn--primary' : 'btn--outline'}` : 'ibtn')
   const Host = r.web?.includes('github.com') ? MarkGithubIcon : LinkExternalIcon
   return (
     <div className="actions">
-      <a className={cls(true)} href={'vscode://file/' + r.path.replaceAll('\\', '/').replace(/^\/+/, '')} title="Open in VS Code">
-        <CodeIcon size={16} />{labels && <span>Open in VS Code</span>}
-      </a>
-      {r.web && <a className={cls()} href={r.web} target="_blank" rel="noreferrer" title={r.web}><Host size={16} />{labels && <span>{r.web.replace('https://', '')}</span>}</a>}
-      <button type="button" className={cls()} onClick={copy} title="Copy path">
-        {copied ? <CheckIcon size={16} /> : <CopyIcon size={16} />}{labels && <span>{copied ? 'Copied' : 'Copy path'}</span>}
+      <button type="button" className="btn btn--outline" onClick={copy} title="Copy path">
+        {copied ? <CheckIcon size={16} /> : <CopyIcon size={16} />}<span>{copied ? 'Copied' : 'Copy path'}</span>
       </button>
+      <a className="btn btn--primary" href={'vscode://file/' + r.path.replaceAll('\\', '/').replace(/^\/+/, '')} title="Open in VS Code">
+        <CodeIcon size={16} /><span>Open in VS Code</span>
+      </a>
+      {r.web && <a className="btn btn--outline actions__remote" href={r.web} target="_blank" rel="noreferrer" title={r.web}><Host size={16} /><span>{r.web.replace('https://', '')}</span></a>}
     </div>
   )
 }
 
-// A top-level repo. Repos nested inside it are listed in the card, so the hierarchy reads at a glance.
-export function RepoCard({ r, kids, fields, open, onOpen }) {
+// One row of the list: a top-level repo, with a fold arrow when repos are nested in it, or a nested repo.
+// Two lines: name, compact pills and age; then branch and the last commit. Filled metadata shows as tags under them.
+export function Row({ r, kids = [], fields, q, open, onOpen, folded, onFold }) {
   const last = r.commits?.[0]
-  const isOpen = open === r.path || kids.some((k) => k.path === open)
+  const isOpen = open === r.path
   return (
-    <article className={`card${isOpen ? ' is-open' : ''}`}>
-      <button className="card__hit" onClick={() => onOpen(r.path)} aria-expanded={open === r.path} aria-label={`Details for ${r.name}`} />
-      <header className="card__head">
-        <h3 className="card__name">{r.name}<StatusDot r={r} kids={kids} /></h3>
-        <Actions r={r} />
-      </header>
-      <p className="branch"><GitBranchIcon size={14} /><span>{branchOf(r)}</span></p>
-      <Pills r={r} />
-      <Tags r={r} fields={fields} />
-      <p className="card__last" title={last && when(last.time)}>
-        {last ? (
-          <>Last commit:<span className="card__subject"><span>{last.subject}</span></span><b>{agoLong(last.time)}</b></>
-        ) : 'No commits yet'}
-      </p>
-      {kids.length > 0 && (
-        <div className="nest">
-          <p className="label">{kids.length} nested {kids.length === 1 ? 'repo' : 'repos'}</p>
-          {kids.map((k) => (
-            <button key={k.path} className={`nest__row${open === k.path ? ' is-open' : ''}`} onClick={() => onOpen(k.path)} aria-expanded={open === k.path}>
-              <FileSubmoduleIcon size={14} className={`tone--${toneOf(k)}`} />
-              <span className="nest__name">{k.name}</span>
-              <Pills r={k} compact />
-            </button>
-          ))}
-        </div>
+    <div className={`row${isOpen ? ' is-open' : ''}`}>
+      {onFold && (
+        <button className="row__chev" onClick={() => onFold(r.path)} disabled={!kids.length} aria-expanded={!folded} aria-label={`${folded ? 'Show' : 'Hide'} repos in ${r.name}`}>
+          {kids.length > 0 && (folded ? <ChevronRightIcon size={14} /> : <ChevronDownIcon size={14} />)}
+        </button>
       )}
-    </article>
+      <StatusDot r={r} kids={folded ? kids : []} /> {/* folded: the dot speaks for the hidden nested repos too */}
+      <button className="row__hit" onClick={() => onOpen(r.path)} aria-current={isOpen || undefined}>
+        <span className="row__top">
+          <span className="row__name"><Hi text={r.name} q={q} /></span>
+          <Pills r={r} compact />
+          {last && <small className="row__ago" title={when(last.time)}>{ago(last.time)}</small>}
+        </span>
+        <span className="row__sub">
+          <GitBranchIcon size={12} /><span className="row__branch"><Hi text={branchOf(r)} q={q} /></span>
+          <span className="row__subject">{r.error ? 'Error' : last ? <Hi text={last.subject} q={q} /> : 'No commits yet'}</span>
+        </span>
+        <Tags r={r} fields={fields} />
+      </button>
+    </div>
   )
 }
 
 // First letter of the status code picks the icon: ?? untracked, A added, D deleted, R/C renamed, U conflict, else modified.
 const FILE = { '?': [DiffAddedIcon, 'new'], A: [DiffAddedIcon, 'add'], D: [DiffRemovedIcon, 'del'], R: [DiffRenamedIcon, 'mod'], C: [DiffRenamedIcon, 'mod'], U: [AlertIcon, 'del'] }
 
-// Parent repo with its nested repos underneath, for switching between them without closing the panel.
-function Tree({ group, current, onSelect }) {
-  const row = (x, Icon) => (
-    <button key={x.path} className={`tree__row${x.path === current ? ' is-open' : ''}`} onClick={() => onSelect(x.path)} aria-current={x.path === current}>
-      <Icon size={14} className={`tone--${toneOf(x)}`} />
-      <span className="tree__name">{x.name}</span>
-      <Pills r={x} compact />
-    </button>
-  )
-  return (
-    <nav className="tree" aria-label="Repos in this group">
-      <p className="label">Repos here</p>
-      {row(group.r, RepoIcon)}
-      <div className="tree__kids">{group.kids.map((k) => row(k, FileSubmoduleIcon))}</div>
-    </nav>
-  )
-}
-
-// Full-width panel under the row of the open card; the caret points at that card's column.
-export function Details({ r, group, caret, fields, onMeta, onFields, onSelect, onClose }) {
+// The reading pane: everything about the open repo. Esc closes it.
+export function Details({ r, fields, q, onMeta, onFields, onSelect, onClose }) {
   useEffect(() => {
     const onKey = (e) => e.key === 'Escape' && !document.querySelector('dialog[open]') && onClose() // Esc in a dialog closes only the dialog
     addEventListener('keydown', onKey)
     return () => removeEventListener('keydown', onKey)
   }, [onClose])
   return (
-    <section className={`details${group.kids.length ? ' details--tree' : ''}`} style={{ '--caret': caret }} aria-label={`${r.name} details`}>
-      {group.kids.length > 0 && <Tree group={group} current={r.path} onSelect={onSelect} />}
-      <div className="details__main">
+    <section className="details" aria-label={`${r.name} details`}>
       <header className="details__head">
         <div className="details__title">
           <h2>
             {r.parent && <><button className="crumb" onClick={() => onSelect(r.parent)} title="Open parent repo">{baseName(r.parent)}</button><span className="crumb"> / </span></>}
-            {r.name}
+            <Hi text={r.name} q={q} />
           </h2>
-          <code>{r.path}</code>
+          <code><Hi text={r.path} q={q} /></code>
         </div>
-        <Actions r={r} labels />
+        <Actions r={r} />
         <button className="ibtn" onClick={onClose} aria-label="Close details"><XIcon size={18} /></button>
       </header>
       <div className="details__status">
-        <p className="branch"><GitBranchIcon size={14} /><span>{branchOf(r)}{r.upstream && <span className="muted"> → {r.upstream}</span>}</span></p>
+        <p className="branch"><GitBranchIcon size={14} /><span><Hi text={branchOf(r)} q={q} />{r.upstream && <span className="muted"> → {r.upstream}</span>}</span></p>
         <Pills r={r} />
       </div>
       {r.error ? <p className="error">{r.error}</p> : (
@@ -173,7 +152,7 @@ export function Details({ r, group, caret, fields, onMeta, onFields, onSelect, o
               <ul className="files">
                 {r.files.map((f) => {
                   const [Icon, kind] = FILE[f.code.trim()[0]] ?? [DiffModifiedIcon, 'mod']
-                  return <li key={f.path} title={f.code}><Icon size={16} className={kind} />{f.path}</li>
+                  return <li key={f.path} title={f.code}><Icon size={16} className={kind} /><Hi text={f.path} q={q} /></li>
                 })}
                 {r.changed > r.files.length && <li className="muted">and {r.changed - r.files.length} more</li>}
               </ul>
@@ -184,15 +163,20 @@ export function Details({ r, group, caret, fields, onMeta, onFields, onSelect, o
             {r.commits.length ? (
               <ul className="commits">
                 {r.commits.map((c) => (
-                  <li key={c.hash}><GitCommitIcon size={16} /><code>{c.hash}</code><span>{c.subject}</span><small title={when(c.time)}>{ago(c.time)}</small></li>
+                  <li key={c.hash}><GitCommitIcon size={16} /><code>{c.hash}</code><span><Hi text={c.subject} q={q} /></span><small title={when(c.time)}>{ago(c.time)}</small></li>
                 ))}
               </ul>
             ) : <p className="muted">No commits yet.</p>}
           </section>
+          {r.pkg && (
+            <>
+              <PkgSection title="Scripts" repo={r.name} items={scriptsOf(r.pkg)} row={scriptRow} />
+              <PkgSection title="Dependencies" repo={r.name} items={depsOf(r.pkg)} row={depRow} />
+            </>
+          )}
         </div>
       )}
       <MetaSection r={r} fields={fields} onSave={onMeta} onManage={onFields} />
-      </div>
     </section>
   )
 }

@@ -1,4 +1,4 @@
-// Metadata in the page: your own fields (server/meta.js), shown as tags on cards, filled in the details panel,
+// Metadata in the page: your own fields (server/meta.js), shown as tags in the list, filled in the details pane,
 // and defined in the Metadata fields dialog. A field is Global (every repo) or Local (one repo); values are per repo.
 // Each input saves on its own, there is no Save button:
 //   Yes / No  saves on toggle          Short text, Date  save on Enter or when you leave the box
@@ -12,24 +12,21 @@ import { useConfirm } from './Confirm.jsx'
 const ICON = { boolean: CheckboxIcon, string: TypographyIcon, text: NoteIcon, date: CalendarIcon }
 const LIMIT = { string: 200, text: 10_000 } // same limits server/meta.js checks
 // Only local fields are tagged: global is the default, so it needs no label.
-const Scope = ({ f }) => f.repo && <span className="scope" title="Only this repo has this field">Local</span>
+export const Scope = ({ f }) => f.repo && <span className="scope" title="Only this repo has this field">Local</span>
 const day = (v) => new Date(v + 'T00:00').toLocaleDateString([], { day: 'numeric', month: 'short', year: 'numeric' }) // T00:00: local, not UTC
 
-// What search matches on: the values, and the names of Yes / No fields that are on.
-export const metaText = (r, fields) => fieldsFor(fields, r.path).map((f) => (r.meta?.[f.key] === true ? f.key : r.meta?.[f.key] ?? '')).join(' ')
-
-// On cards: one quiet tag per filled field. Long text stays in the details panel.
+// In the list: one quiet tag per filled field. Long text stays in the details pane.
 export function Tags({ r, fields }) {
   const set = fieldsFor(fields, r.path).filter((f) => f.type !== 'text' && r.meta?.[f.key] !== undefined)
   if (!set.length) return null
   return (
-    <p className="tags">
+    <span className="tags">
       {set.map((f) => (
         <span key={f.key} className="tag">
           {f.type === 'boolean' ? <><CheckIcon size={12} />{f.key}</> : <>{f.key}<b>{f.type === 'date' ? day(r.meta[f.key]) : r.meta[f.key]}</b></>}
         </span>
       ))}
-    </p>
+    </span>
   )
 }
 
