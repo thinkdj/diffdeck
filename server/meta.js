@@ -30,13 +30,22 @@ const sameField = (f, key, repo) => f.key === key && (f.repo ?? null) === (repo 
 // The fields one repo has: every global, then its own locals.
 export const fieldsFor = (fields = [], path) => [...fields.filter((f) => !f.repo), ...fields.filter((f) => f.repo === path)]
 
-// A repo as the page gets it: its values ride along as r.meta.
-export const withMeta = (cfg, repo) => ({ ...repo, meta: cfg.meta?.[repo.path] ?? {} })
+// A repo as the page gets it: its values ride along as r.meta. A field the repo has no value for shows its default;
+// a stored null means "cleared on purpose" and beats the default. The page never sees null.
+export function withMeta(cfg, repo) {
+  const stored = cfg.meta?.[repo.path] ?? {}
+  const meta = {}
+  for (const f of fieldsFor(cfg.fields, repo.path)) {
+    const v = Object.hasOwn(stored, f.key) ? stored[f.key] : f.default
+    if (v != null) meta[f.key] = v
+  }
+  return { ...repo, meta }
+}
 
 // Add a field, or change one: `was` names the field being edited. `repo` makes it local to that repo (it can't
 // change later). Values follow a rename; a type change keeps only the values that still fit (Short text to Long
-// text keeps all, Yes / No to Date keeps none).
-export function saveField(cfg, { was, key, desc, type, repo } = {}) {
+// text keeps all, Yes / No to Date keeps none). `default` is optional: what repos without a value of their own show.
+export function saveField(cfg, { was, key, desc, type, repo, default: def } = {}) {
   const fields = cfg.fields ?? []
   key = String(key ?? '').trim()
   desc = String(desc ?? '').trim()
@@ -46,20 +55,24 @@ export function saveField(cfg, { was, key, desc, type, repo } = {}) {
   if (key in {}) throw new Error(`"${key}" is a reserved word. Pick another name.`) // constructor, __proto__, …: unsafe as object keys
   if (!Object.hasOwn(TYPES, type)) throw new Error('Pick a type.')
   if (repo != null && (typeof repo !== 'string' || !repo)) throw new Error('Which repo?')
+  if (typeof def === 'string') def = def.trim()
+  if (def === '' || def === false) def = null // an empty default is no default
+  if (def != null && !FITS[type](def)) throw new Error(`The default for ${key} takes ${NEEDS[type]}.`)
   const i = was == null ? -1 : fields.findIndex((f) => sameField(f, was, repo))
   if (was != null && i < 0) throw new Error(`There is no field called ${was}.`)
   // a global clashes with any field of that name, a local with globals and its own repo's locals
   if (fields.some((f, j) => j !== i && f.key === key && (!repo || !f.repo || f.repo === repo))) {
     throw new Error(`There is already a field called ${key}${repo ? ' for this repo' : ''}.`)
   }
-  const field = repo ? { key, desc, type, repo } : { key, desc, type }
+  const field = { key, desc, type, ...(def != null && { default: def }), ...(repo && { repo }) }
+  const keep = (v) => (v === null ? def != null : FITS[type](v)) // a cleared-on-purpose null only matters while there is a default
   if (i < 0) return { ...cfg, fields: [...fields, field] }
   return {
     ...cfg,
     fields: fields.with(i, field),
     meta: eachRepo(cfg.meta, repo, (vals) => {
       const rest = without(vals, was)
-      return FITS[type](vals[was]) ? { ...rest, [key]: vals[was] } : rest
+      return Object.hasOwn(vals, was) && keep(vals[was]) ? { ...rest, [key]: vals[was] } : rest
     }),
   }
 }
@@ -71,7 +84,8 @@ export const removeField = (cfg, key, repo) => ({
   meta: eachRepo(cfg.meta, repo, (vals) => without(vals, key)),
 })
 
-// Set one repo's value for one field. '', false or null clears it.
+// Set one repo's value for one field. '', false or null clears it: the key goes, or becomes null when the field
+// has a default, so the repo stays empty instead of falling back to the default.
 export function setValue(cfg, { path, key, value } = {}) {
   if (typeof path !== 'string' || !path) throw new Error('Which repo?')
   const field = fieldsFor(cfg.fields, path).find((f) => f.key === key)
@@ -80,7 +94,7 @@ export function setValue(cfg, { path, key, value } = {}) {
   const empty = v === '' || v === false || v == null
   if (!empty && !FITS[field.type](v)) throw new Error(`${key} takes ${NEEDS[field.type]}.`)
   const rest = without(cfg.meta?.[path] ?? {}, key)
-  const vals = empty ? rest : { ...rest, [key]: v }
+  const vals = !empty ? { ...rest, [key]: v } : field.default != null ? { ...rest, [key]: null } : rest
   const meta = { ...cfg.meta, [path]: vals }
   if (!Object.keys(vals).length) delete meta[path]
   return { ...cfg, meta }

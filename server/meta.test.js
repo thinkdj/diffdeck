@@ -44,6 +44,23 @@ test('local fields belong to one repo, globals to all', () => {
   assert.deepEqual([cfg.fields.map((f) => f.key), cfg.meta], [['Live', 'Store status'], { [P]: { 'Store status': 'In review' } }])
 })
 
+test('a default fills repos without a value, and clearing beats it', () => {
+  let cfg = saveField({}, { key: 'Stack', type: 'string', default: ' Node ' })
+  cfg = saveField(cfg, { key: 'Live', type: 'boolean', default: true })
+  cfg = saveField(cfg, { key: 'Notes', type: 'text', default: '' }) // empty default is no default
+  assert.deepEqual(cfg.fields.map((f) => f.default), ['Node', true, undefined])
+  assert.deepEqual(withMeta(cfg, { path: P }).meta, { Stack: 'Node', Live: true })
+
+  cfg = setValue(cfg, { path: P, key: 'Stack', value: 'Go' })
+  cfg = setValue(cfg, { path: P, key: 'Live', value: false }) // switched off on purpose: stays off
+  assert.deepEqual(cfg.meta[P], { Stack: 'Go', Live: null })
+  assert.deepEqual(withMeta(cfg, { path: P }).meta, { Stack: 'Go' })
+
+  cfg = saveField(cfg, { was: 'Live', key: 'Live', type: 'boolean' }) // default dropped: the null goes with it
+  assert.deepEqual(cfg.meta[P], { Stack: 'Go' })
+  assert.throws(() => saveField(cfg, { key: 'Due', type: 'date', default: 'soon' }), /default for Due takes a date/)
+})
+
 test('bad input is refused with a readable message', () => {
   const cfg = saveField({}, { key: 'Launch', type: 'date' })
   assert.throws(() => saveField(cfg, { key: 'Launch', type: 'date' }), /already a field/)

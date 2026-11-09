@@ -5,6 +5,7 @@ What changed in each release, in plain words. Newest first.
 ## Unreleased
 
 - **New layout:** the page works like an inbox. The repos are a list on the left, with nested repos indented under their parent and foldable like folders, and the repo you pick opens on the right with its files, commits and metadata. Both sides scroll on their own, so nothing is wasted on empty card space. Up and down move through the list. Watched folders and the add bar fold away under the list. On phones you see one side at a time.
+- **Default values:** a metadata field can have a default that every repo without its own value shows. Leave NULL checked for none. Clearing a value in one repo keeps it empty instead of falling back.
 - **Metadata filters:** one filter per field under the status filter, Yes / No, a pick from the values in use, Overdue / Next 7 days / Later for dates, with the active ones as chips. Search now sticks to contents (names, branches, paths, commit subjects, file paths) and highlights matches.
 - **Details actions:** Copy path and Open in VS Code sit together on the left, the remote link on the right. A better first-run page, and the demo can show it with the **Empty state** button.
 - **Scripts and dependencies:** a repo with a `package.json` shows its scripts, the usual ones first, and its dependencies, dev ones tagged, in the details pane. Ten of each, with **View all** opening the full list in a side sheet.
