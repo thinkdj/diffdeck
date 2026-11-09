@@ -12,7 +12,8 @@ const DEMO = import.meta.env.MODE === 'demo'
 
 async function api(url, opts) {
   if (DEMO) return (await import('./demo.js')).demoApi(url, opts)
-  const res = await fetch('/api' + url, opts)
+  // The browser's own words for this are "Failed to fetch", which says nothing about what to do.
+  const res = await fetch('/api' + url, opts).catch(() => { throw new Error("Can't reach diffdeck. If you closed it, run npx diffdeck again.") })
   const body = await res.json()
   if (!res.ok) throw new Error(body.error)
   return body
@@ -50,6 +51,7 @@ function ThemeToggle() {
 }
 
 const AUTO = 5 // minutes between automatic refreshes, while the tab is visible
+const nRepos = (n) => `${n} ${n === 1 ? 'repo' : 'repos'}`
 
 // "Synced at 9:38 PM (a few seconds ago)", then (1m ago), (1h ago): the same short ages as the list. Ticks every 10s.
 function Synced({ at }) {
@@ -97,6 +99,7 @@ export default function App() {
   const searchRef = useRef(null)
   const inflight = useRef(null)
   const rowsRef = useRef([])
+  const listY = useRef(0) // under 860px the page itself scrolls: where the list was when a repo opened
   const [confirm, confirmUI] = useConfirm()
 
   // Every route returns the fresh list, so loading, adding and removing all land here.
@@ -150,7 +153,11 @@ export default function App() {
       removeEventListener('keydown', onKey)
     }
   }, [refresh])
-  useEffect(() => { document.querySelector('.row.is-open')?.scrollIntoView({ block: 'nearest' }) }, [open])
+  useEffect(() => {
+    document.querySelector('.row.is-open')?.scrollIntoView({ block: 'nearest' })
+    document.querySelector('.main').scrollTop = 0 // a repo opens at its title, wherever the last one was scrolled to
+    scrollTo(0, open ? 0 : listY.current) // under 860px: the top of the repo, or back to where the list was
+  }, [open])
 
   const close = useCallback(() => setOpen(null), [])
   const fold = (path) => setFolded((s) => {
@@ -162,7 +169,7 @@ export default function App() {
   const remove = async (root) => {
     const ok = await confirm({
       title: 'Stop watching this folder?',
-      body: <><code>{root.path}</code>{root.missing ? '' : ` and its ${root.count} ${root.count === 1 ? 'repo' : 'repos'}`} will leave diffdeck. Nothing on disk changes.</>,
+      body: <><code>{root.path}</code>{root.missing ? '' : ` and its ${nRepos(root.count)}`} will leave diffdeck. Nothing on disk changes.</>,
       action: 'Stop watching',
     })
     if (ok) del('/roots?path=' + encodeURIComponent(root.path))
@@ -188,6 +195,11 @@ export default function App() {
     .sort(SORTS[sort])
   rowsRef.current = shown.flatMap((g) => [g.r, ...(folded.has(g.r.path) ? [] : g.kids)]) // what the arrow keys walk
   const selected = shown.flatMap((g) => [g.r, ...g.kids]).find((r) => r.path === open)
+  const show = (path) => {
+    if (!selected) listY.current = scrollY
+    setOpen(path)
+  }
+  const reset = () => { setQ(''); setFilter('all'); setMf({}) }
 
   const addForm = <AddForm busy={busy} onAdd={addRoot} onBrowse={browse} big={!roots.length} />
   return (
@@ -224,10 +236,17 @@ export default function App() {
               <div className="tools__row">
                 <label className="search">
                   <SearchIcon size={16} />
-                  <input ref={searchRef} type="search" placeholder="Search names, branches, commits, files" aria-label="Search repos" value={q} onChange={(e) => setQ(e.target.value)} />
+                  <input
+                    ref={searchRef} type="search" placeholder="Search names, branches, commits, files" aria-label="Search repos" value={q} onChange={(e) => setQ(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key !== 'Escape') return
+                      e.stopPropagation() // Esc here clears the search, then leaves the box: it never closes the open repo
+                      q ? setQ('') : e.target.blur()
+                    }}
+                  />
                   <kbd>/</kbd>
                 </label>
-                <select className="select" value={sort} onChange={(e) => setSort(e.target.value)} aria-label="Sort">
+                <select className="select" value={sort} onChange={(e) => setSort(e.target.value)} aria-label="Sort" title="Sort the list">
                   <option value="recent">Recent</option>
                   <option value="name">A–Z</option>
                 </select>
@@ -237,30 +256,30 @@ export default function App() {
             </div>
           )}
           <div className="side__list">
-            {!data ? <div className="skeleton" /> : shown.length ? (
+            {!data ? <p className="none">{error ? '' : 'Checking your repos…'}</p> : shown.length ? (
               <ul className="tree">
                 {shown.map((g) => (
                   <li key={g.r.path}>
-                    <Row r={g.r} kids={g.kids} fields={fields} q={needle} open={open} onOpen={setOpen} folded={folded.has(g.r.path)} onFold={fold} />
+                    <Row r={g.r} kids={g.kids} fields={fields} q={needle} open={open} onOpen={show} folded={folded.has(g.r.path)} onFold={fold} />
                     {g.kids.length > 0 && !folded.has(g.r.path) && (
                       <ul className="tree__kids">
-                        {g.kids.map((k) => <li key={k.path}><Row r={k} fields={fields} q={needle} open={open} onOpen={setOpen} /></li>)}
+                        {g.kids.map((k) => <li key={k.path}><Row r={k} fields={fields} q={needle} open={open} onOpen={show} /></li>)}
                       </ul>
                     )}
                   </li>
                 ))}
               </ul>
-            ) : roots.length > 0 && <p className="none">No repos match.</p>}
+            ) : roots.length > 0 && <p className="none">No repos match. <button className="more" onClick={reset}>Clear search and filters</button></p>}
           </div>
           {roots.length > 0 && (
             <details className="watch">
-              <summary><FileDirectoryIcon size={14} />Watching {roots.length} {roots.length === 1 ? 'folder' : 'folders'}<ChevronDownIcon size={14} /></summary>
+              <summary><FileDirectoryIcon size={14} />Watching {roots.length} {roots.length === 1 ? 'folder' : 'folders'}<small>Add or remove</small><ChevronDownIcon size={14} /></summary>
               <div className="watch__body">
                 <div className="roots">
                   {roots.map((root) => (
                     <span className="root" key={root.path}>
                       <code title={root.path}>{root.path}</code>
-                      <small className={root.missing ? 'bad' : ''}>{root.missing ? 'not found' : root.count}</small>
+                      <small className={root.missing ? 'bad' : ''}>{root.missing ? 'not found' : nRepos(root.count)}</small>
                       <button type="button" title="Stop watching" aria-label={`Stop watching ${root.path}`} onClick={() => remove(root)}><XIcon size={14} /></button>
                     </span>
                   ))}
@@ -295,7 +314,7 @@ export default function App() {
           )}
         </main>
       </div>
-      {fieldsRepo && <FieldsDialog repo={fieldsRepo} fields={fields} busy={busy} error={error} post={post} remove={del} onClose={() => setFieldsRepo(null)} />}
+      {fieldsRepo && <FieldsDialog repo={fieldsRepo} fields={fields} busy={busy} error={error} post={post} remove={del} onClose={() => { setError(''); setFieldsRepo(null) }} />}
       {confirmUI}
       <TitleTips />
     </div>
