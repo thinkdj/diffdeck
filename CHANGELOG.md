@@ -2,7 +2,9 @@
 
 What changed in each release, in plain words. Newest first.
 
-## Unreleased
+## 1.1.2
+
+The polish release: no new features, just the inbox with its rough edges taken off. Rows open wherever you click, search and filters never leave you stuck, and the page says things in plain words.
 
 - **Rows open from anywhere:** a click on a row's padding or tags opens the repo, not only a click on its text.
 - **Esc in search** clears the search, then leaves the box. It no longer closes the open repo.
