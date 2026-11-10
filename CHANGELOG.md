@@ -2,7 +2,7 @@
 
 What changed in each release, in plain words. Newest first.
 
-## 1.1.2
+## 1.1.3
 
 The polish release: no new features, just the inbox with its rough edges taken off. Rows open wherever you click, search and filters never leave you stuck, and the page says things in plain words.
 

@@ -103,7 +103,13 @@ pnpm build:demo   # static site in dist-demo/, relative paths, host it anywhere 
 
 ## Release
 
-From a clean `main`, in a normal terminal (npm opens the browser for your security key):
+By hand, from a clean `main`, in a normal terminal (npm opens the browser for your security key). Log in first: the login expires, and without it the publish fails with a misleading 404.
+
+```bash
+npm login
+npm whoami     # must print your username before you go on
+pnpm release
+```
 
 | Command | Version | npm dist-tag | Who gets it |
 |---|---|---|---|
@@ -112,7 +118,7 @@ From a clean `main`, in a normal terminal (npm opens the browser for your securi
 | `pnpm release:major` | 0.2.0 → 1.0.0 | `latest` | everyone |
 | `pnpm release:beta` | 0.2.0 → 0.2.1-beta.0 | `beta` | only `npx diffdeck@beta` |
 
-Each one runs the tests, bumps `package.json`, commits `Release x.y.z` with a `vx.y.z` git tag, publishes (tests and build run again in `prepublishOnly`), then pushes the commit and tag. Publishing comes before the push, so a cancelled publish leaves nothing half-released on GitHub: rerun `npm publish`, then `git push --follow-tags`.
+Each one runs the tests, bumps `package.json`, commits `Release x.y.z` with a `vx.y.z` git tag, publishes (tests and build run again in `prepublishOnly`), then pushes the commit and tag. Publishing comes before the push, so a cancelled or failed publish leaves nothing half-released on GitHub. The bump commit and tag are already made locally by then, so don't rerun `pnpm release`, which would bump a second time: rerun `npm publish`, then `git push --follow-tags`.
 
 To make a tested beta the default: `npm dist-tag add diffdeck@0.2.1-beta.0 latest`.
 

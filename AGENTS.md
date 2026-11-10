@@ -71,5 +71,5 @@ Notes for coding agents (and people) working on diffdeck. The README covers what
 
 - `pnpm test` runs `node --test`, which picks up every `*.test.js`: `server/` (git parsing and the repo-config guard, the API's origin check, metadata rules) and `src/inline.test.js` (description markdown). Plain `node:test` and `assert`, no framework. Test files are left out of the npm package.
 - Check `pnpm build` and `pnpm build:demo` after UI changes.
-- Releases: `pnpm release` (or `:minor`, `:major`, `:beta`) from a clean `main`. npm needs the owner's security key, so agents don't publish; the owner runs it in their own terminal. Note user-facing changes in `CHANGELOG.md` under **Unreleased**.
+- Releases: `pnpm release` (or `:minor`, `:major`, `:beta`) from a clean `main`. **Agents never run a release**: not `pnpm release*`, `npm version` or `npm publish`. They make a version commit and a git tag before the publish, which needs the owner's npm login and security key and so fails, leaving a stray bump and tag behind. The owner runs it by hand in their own terminal (`npm login`, `npm whoami`, `pnpm release`; see the README). Note user-facing changes in `CHANGELOG.md` under **Unreleased**.
 - Commits: plain human titles, no `feat:` style prefixes, no co-author trailers, no URLs in messages.
